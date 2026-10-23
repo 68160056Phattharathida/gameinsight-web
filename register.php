@@ -36,12 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "คุณต้องยอมรับข้อกำหนดการให้บริการก่อนสมัครสมาชิก";
     }
 
-    // 3. บันทึกลงฐานข้อมูล
+    // 3. บันทึกลงฐานข้อมูล (ใช้ตาราง users ตาม Schema ใหม่)
     if (empty($errors)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        // ปรับชื่อคอลัมน์เป็น password_hash ให้ตรงกับ schema.sql
-        $stmt = $pdo->prepare("INSERT INTO gi_users (username, email, password_hash, agreed_terms, agreed_at) VALUES (?, ?, ?, ?, NOW())");
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, agreed_terms, agreed_at) VALUES (?, ?, ?, ?, NOW())");
 
         try {
             $stmt->execute([$username, $email, $hashed_password, $agreed_terms]);
@@ -123,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="form-group">
             <label>
                 <input type="checkbox" name="agreed_terms" value="1" required>
-                ฉันยอมรับ <a href="terms.php" target="_blank">ข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว</a>
+                ฉันยอมรับ <a href="#" id="openModal">ข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว</a>
             </label>
         </div>
 
@@ -143,8 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <script>
     const modal = document.getElementById('tosModal');
-    document.getElementById('openModal').onclick = (e) => { e.preventDefault(); modal.style.display = 'flex'; };
-    document.getElementById('closeModal').onclick = () => { modal.style.display = 'none'; };
+    const openBtn = document.getElementById('openModal');
+    const closeBtn = document.getElementById('closeModal');
+
+    if (openBtn) {
+        openBtn.onclick = (e) => { e.preventDefault(); modal.style.display = 'flex'; };
+    }
+    if (closeBtn) {
+        closeBtn.onclick = () => { modal.style.display = 'none'; };
+    }
     window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
 </script>
 
