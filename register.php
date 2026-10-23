@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'db.php';
+require_once 'config/db.php';
 
 // สร้าง CSRF Token
 if (empty($_SESSION['csrf_token'])) {
