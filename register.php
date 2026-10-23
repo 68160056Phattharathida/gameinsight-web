@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
         // ปรับชื่อคอลัมน์เป็น password_hash ให้ตรงกับ schema.sql
-        $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, agreed_terms, agreed_at) VALUES (?, ?, ?, ?, NOW())");
+        $stmt = $pdo->prepare("INSERT INTO gi_users (username, email, password_hash, agreed_terms, agreed_at) VALUES (?, ?, ?, ?, NOW())");
 
         try {
             $stmt->execute([$username, $email, $hashed_password, $agreed_terms]);
