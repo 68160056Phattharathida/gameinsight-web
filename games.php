@@ -236,7 +236,7 @@ try {
                         <div class="developer">ผู้พัฒนา: <?= htmlspecialchars($game['developer'] ?: 'ไม่ระบุ') ?></div>
                         
                         <div class="card-actions">
-                            <a href="reviews.php?game_id=<?= $game['game_id'] ?>" class="btn-review">ดูรีวิวเกมนี้</a>
+                            <a href="game_detail.php?game_id=<?= $game['game_id'] ?>" class="btn-review">ดูรีวิวเกมนี้</a>
                             <?php if (!empty($game['store_url'])): ?>
                                 <a href="<?= htmlspecialchars($game['store_url']) ?>" target="_blank" class="btn-store">ร้านค้า</a>
                             <?php endif; ?>
