@@ -2,9 +2,9 @@
 session_start();
 require_once 'config/db.php';
 
-// ถ้าล็อกอินอยู่แล้ว ให้เปลี่ยนหน้าไป index.php หรือหน้าหลักทันที
+// ถ้าล็อกอินอยู่แล้ว ให้เปลี่ยนหน้าไป games.php
 if (isset($_SESSION['user_id'])) {
-    header("Location: index.php");
+    header("Location: games.php");
     exit();
 }
 
@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username_email) || empty($password)) {
         $error = "กรุณากรอกข้อมูลให้ครบถ้วน";
     } else {
-        // แก้ไขจุดที่ 1: เปลี่ยนชื่อตารางเป็น users
+        // ค้นหาผู้ใช้จาก username หรือ email ในตาราง users
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :input OR email = :input LIMIT 1");
         $stmt->execute(['input' => $username_email]);
         $user = $stmt->fetch();
@@ -30,11 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // จัดเก็บข้อมูลลงใน $_SESSION
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['username'] = $user['username'];
-            // แก้ไขจุดที่ 2: เปลี่ยน fallback role เป็น 'member'
             $_SESSION['role'] = $user['role'] ?? 'member';
 
-            // ส่งไปยังหน้าหลัก
-            header("Location: index.php");
+            // ส่งไปยังหน้าหลักใหม่ games.php
+            header("Location: games.php");
             exit();
         } else {
             $error = "ชื่อผู้ใช้/อีเมล หรือรหัสผ่านไม่ถูกต้อง";
