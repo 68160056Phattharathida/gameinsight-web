@@ -17,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username_email) || empty($password)) {
         $error = "กรุณากรอกข้อมูลให้ครบถ้วน";
     } else {
-        // ดึงข้อมูลผู้ใช้ ค้นหาได้ทั้ง Username หรือ Email
-        $stmt = $pdo->prepare("SELECT * FROM gi_users WHERE username = :input OR email = :input LIMIT 1");
+        // แก้ไขจุดที่ 1: เปลี่ยนชื่อตารางเป็น users
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :input OR email = :input LIMIT 1");
         $stmt->execute(['input' => $username_email]);
         $user = $stmt->fetch();
 
@@ -30,7 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // จัดเก็บข้อมูลลงใน $_SESSION
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role'] ?? 'user';
+            // แก้ไขจุดที่ 2: เปลี่ยน fallback role เป็น 'member'
+            $_SESSION['role'] = $user['role'] ?? 'member';
 
             // ส่งไปยังหน้าหลัก
             header("Location: index.php");
