@@ -11,7 +11,7 @@ if (isset($_SESSION['user_id'])) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username_email = trim($_POST['username_email']);
+    $username_email = trim($_POST['username_email'] ?? '');
     $password = $_POST['password'];
 
     if (empty($username_email) || empty($password)) {
