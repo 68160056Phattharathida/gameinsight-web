@@ -73,8 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .btn { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
         .btn:hover { background-color: #218838; }
+        .btn-login { display: inline-block; width: 100%; padding: 10px; background-color: #007bff; color: white; text-align: center; text-decoration: none; border-radius: 4px; font-size: 15px; font-weight: bold; box-sizing: border-box; margin-top: 10px; }
+        .btn-login:hover { background-color: #0056b3; }
         .alert-error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
-        .alert-success { background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        .alert-success { background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 15px; text-align: center; }
+        .login-link { text-align: center; margin-top: 15px; font-size: 14px; }
+        .login-link a { color: #007bff; text-decoration: none; font-weight: bold; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 20px; border-radius: 8px; width: 80%; max-width: 500px; max-height: 70vh; overflow-y: auto; }
@@ -93,41 +97,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <?php if ($success): ?>
-        <div class="alert-success"><?= $success ?></div>
+        <div class="alert-success">
+            <p style="margin: 0 0 10px 0; font-weight: bold;"><?= $success ?></p>
+            <a href="login.php" class="btn-login">เข้าสู่ระบบทันที</a>
+        </div>
+    <?php else: ?>
+        <form method="POST" action="">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="agreed_terms" value="1" required>
+                    ฉันยอมรับ <a href="#" id="openModal">ข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว</a>
+                </label>
+            </div>
+
+            <button type="submit" class="btn">สมัครสมาชิก</button>
+        </form>
+
+        <div class="login-link">
+            มีบัญชีอยู่แล้ว? <a href="login.php">เข้าสู่ระบบ</a>
+        </div>
     <?php endif; ?>
-
-    <form method="POST" action="">
-        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" required>
-        </div>
-
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required>
-        </div>
-
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required minlength="6">
-        </div>
-
-        <div class="form-group">
-            <label for="confirm_password">Confirm Password</label>
-            <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
-        </div>
-
-        <div class="form-group">
-            <label>
-                <input type="checkbox" name="agreed_terms" value="1" required>
-                ฉันยอมรับ <a href="#" id="openModal">ข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว</a>
-            </label>
-        </div>
-
-        <button type="submit" class="btn">สมัครสมาชิก</button>
-    </form>
 </div>
 
 <div id="tosModal" class="modal">
