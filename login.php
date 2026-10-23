@@ -12,7 +12,7 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username_email = trim($_POST['username_email'] ?? '');
-    $password = $_POST['password'];
+    $password = $_POST['password'] ?? '';
 
     if (empty($username_email) || empty($password)) {
         $error = "กรุณากรอกข้อมูลให้ครบถ้วน";
