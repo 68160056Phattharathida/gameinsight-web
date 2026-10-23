@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        // ปรับชื่อคอลัมน์เป็น password_hash ให้ตรงกับ schema.sql
+        // แก้ไขจุดที่ 1: เปลี่ยนชื่อตารางเป็น users ให้ตรงกับ schema.sql
         $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, agreed_terms, agreed_at) VALUES (?, ?, ?, ?, NOW())");
 
         try {
@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="form-group">
             <label>
                 <input type="checkbox" name="agreed_terms" value="1" required>
-                ฉันยอมรับ <a href="#" id="openModal">ข้อกำหนดการให้บริการ (ToS)</a>
+                ฉันยอมรับ <a href="#" id="openModal">ข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว</a>
             </label>
         </div>
 
@@ -143,8 +143,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <script>
     const modal = document.getElementById('tosModal');
-    document.getElementById('openModal').onclick = (e) => { e.preventDefault(); modal.style.display = 'flex'; };
-    document.getElementById('closeModal').onclick = () => { modal.style.display = 'none'; };
+    const openBtn = document.getElementById('openModal');
+    const closeBtn = document.getElementById('closeModal');
+
+    if (openBtn) {
+        openBtn.onclick = (e) => { e.preventDefault(); modal.style.display = 'flex'; };
+    }
+    if (closeBtn) {
+        closeBtn.onclick = () => { modal.style.display = 'none'; };
+    }
     window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
 </script>
 
