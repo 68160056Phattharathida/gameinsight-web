@@ -36,11 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "คุณต้องยอมรับข้อกำหนดการให้บริการก่อนสมัครสมาชิก";
     }
 
-    // 3. บันทึกลงฐานข้อมูล
+    // 3. บันทึกลงฐานข้อมูล (ใช้ตาราง users ตาม Schema ใหม่)
     if (empty($errors)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        // แก้ไขจุดที่ 1: เปลี่ยนชื่อตารางเป็น users ให้ตรงกับ schema.sql
         $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, agreed_terms, agreed_at) VALUES (?, ?, ?, ?, NOW())");
 
         try {
