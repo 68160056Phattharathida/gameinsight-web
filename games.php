@@ -2,7 +2,7 @@
 session_start();
 require_once 'config/db.php';
 
-// ดึงรายการหมวดหมู่ทั้งหมดสำหรับทำแถบ Filter
+// ดึงรายการหมวดหมู่ทั้งหมดสำหรับทำแถบ Filter (เปลี่ยนเป็น gi_categories)
 try {
     $cat_stmt = $pdo->query("SELECT category_id, category_name FROM gi_categories ORDER BY category_name ASC");
     $categories = $cat_stmt->fetchAll();
@@ -14,7 +14,7 @@ try {
 $search = trim($_GET['search'] ?? '');
 $selected_category = $_GET['category'] ?? '';
 
-// สร้างคำสั่ง SQL ดึงรายชื่อเกม
+// สร้างคำสั่ง SQL ดึงรายชื่อเกม (เปลี่ยนเป็น gi_games และ gi_categories)
 $sql = "SELECT g.game_id, g.title, g.developer, g.cover_image, g.store_url, c.category_name 
         FROM gi_games g 
         LEFT JOIN gi_categories c ON g.category_id = c.category_id 
