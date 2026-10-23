@@ -18,17 +18,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "กรุณากรอกข้อมูลให้ครบถ้วน";
     } else {
         // ดึงข้อมูลผู้ใช้ ค้นหาได้ทั้ง Username หรือ Email
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :input OR email = :input LIMIT 1");
+        $stmt = $pdo->prepare("SELECT * FROM gi_users WHERE username = :input OR email = :input LIMIT 1");
         $stmt->execute(['input' => $username_email]);
         $user = $stmt->fetch();
 
         // ตรวจสอบรหัสผ่านด้วย password_verify()
-        if ($user && password_verify($password, $user['password'])) {
+        if ($user && password_verify($password, $user['password_hash'])) {
             // ป้องกัน Session Fixation
             session_regenerate_id(true);
 
             // จัดเก็บข้อมูลลงใน $_SESSION
-            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'] ?? 'user';
 
