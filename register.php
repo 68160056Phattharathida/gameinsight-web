@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="form-group">
             <label>
                 <input type="checkbox" name="agreed_terms" value="1" required>
-                ฉันยอมรับ <a href="#" id="openModal">ข้อกำหนดการให้บริการ (ToS)</a>
+                ฉันยอมรับ <a href="terms.php" target="_blank">ข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว</a>
             </label>
         </div>
 
