@@ -71,18 +71,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="password"] {
             width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
         }
-        .btn { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
-        .btn:hover { background-color: #218838; }
-        .btn-login { display: inline-block; width: 100%; padding: 10px; background-color: #007bff; color: white; text-align: center; text-decoration: none; border-radius: 4px; font-size: 15px; font-weight: bold; box-sizing: border-box; margin-top: 10px; }
-        .btn-login:hover { background-color: #0056b3; }
-        .alert-error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
-        .alert-success { background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 15px; text-align: center; }
-        .login-link { text-align: center; margin-top: 15px; font-size: 14px; }
-        .login-link a { color: #007bff; text-decoration: none; font-weight: bold; }
-        
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 80%; max-width: 500px; max-height: 70vh; overflow-y: auto; }
-        .close-btn { float: right; cursor: pointer; font-weight: bold; font-size: 20px; }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #bdbdbd;
+            color: #666;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: not-allowed;
+            transition: background-color 0.2s;
+        }
+
+        .btn:enabled {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn:enabled:hover {
+            background-color: #218838;
+        }
+
+        .btn-login {
+            display: inline-block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: bold;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            background-color: #0056b3;
+        }
+                .alert-error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+                .alert-success { background: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 15px; text-align: center; }
+                .login-link { text-align: center; margin-top: 15px; font-size: 14px; }
+                .login-link a { color: #007bff; text-decoration: none; font-weight: bold; }
+
+                .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+                .modal-content { background: white; padding: 20px; border-radius: 8px; width: 80%; max-width: 500px; max-height: 70vh; overflow-y: auto; }
+                .close-btn { float: right; cursor: pointer; font-weight: bold; font-size: 20px; }
     </style>
 </head>
 <body>
@@ -132,7 +168,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </label>
             </div>
 
-            <button type="submit" class="btn">สมัครสมาชิก</button>
+            <button type="submit" class="btn" id="registerBtn" disabled>
+                สมัครสมาชิก
+            </button>
         </form>
 
         <div class="login-link">
@@ -151,19 +189,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
+
 <script>
     const modal = document.getElementById('tosModal');
     const openBtn = document.getElementById('openModal');
     const closeBtn = document.getElementById('closeModal');
 
-    if (openBtn) {
-        openBtn.onclick = (e) => { e.preventDefault(); modal.style.display = 'flex'; };
+    if (openBtn && modal) {
+        openBtn.onclick = (e) => {
+            e.preventDefault();
+            modal.style.display = 'flex';
+        };
     }
-    if (closeBtn) {
-        closeBtn.onclick = () => { modal.style.display = 'none'; };
-    }
-    window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
-</script>
 
-</body>
-</html>
+    if (closeBtn && modal) {
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+    }
+
+    window.onclick = (e) => {
+        if (modal && e.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+
+    // ตรวจสอบข้อมูลก่อนเปิดใช้งานปุ่มสมัครสมาชิก
+    const form = document.querySelector('.card form');
+    const registerBtn = document.getElementById('registerBtn');
+
+    if (form && registerBtn) {
+        const username = document.getElementById('username');
+        const email = document.getElementById('email');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm_password');
+        const agreedTerms = form.querySelector(
+            'input[name="agreed_terms"]'
+        );
+
+        function checkForm() {
+            const allFilled =
+                username.value.trim() !== '' &&
+                email.value.trim() !== '' &&
+                password.value !== '' &&
+                confirmPassword.value !== '';
+
+            const validEmail = email.validity.valid;
+            const validPassword = password.value.length >= 6;
+            const passwordsMatch =
+                password.value === confirmPassword.value;
+            const termsAccepted = agreedTerms.checked;
+
+            registerBtn.disabled = !(
+                allFilled &&
+                validEmail &&
+                validPassword &&
+                passwordsMatch &&
+                termsAccepted
+            );
+        }
+
+        form.addEventListener('input', checkForm);
+        form.addEventListener('change', checkForm);
+
+        checkForm();
+    }
+</script>
