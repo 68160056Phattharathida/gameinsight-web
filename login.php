@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "กรุณากรอกข้อมูลให้ครบถ้วน";
     } else {
         // ค้นหาผู้ใช้จาก username หรือ email ในตาราง users
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :input OR email = :input LIMIT 1");
+        $stmt = $pdo->prepare("SELECT * FROM gi_users WHERE username = :input OR email = :input LIMIT 1");
         $stmt->execute(['input' => $username_email]);
         $user = $stmt->fetch();
 
