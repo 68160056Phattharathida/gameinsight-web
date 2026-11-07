@@ -190,8 +190,19 @@ $comment_stmt = $pdo->prepare("
                             </div>
                         </div>
 
-                        <div class="bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full font-bold text-lg flex items-center gap-1">
-                            ⭐ <?= number_format((float) $review['rating'], 1) ?> / 5.0
+                        <div class="flex items-center gap-3">
+                            <div class="bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full font-bold text-lg flex items-center gap-1">
+                                ⭐ <?= number_format((float) $review['rating'], 1) ?> / 5.0
+                            </div>
+
+                            <!-- 📌 โค้ดที่วางเพิ่ม (เฉพาะเจ้าของรีวิว หรือ Admin) -->
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $review['user_id'] || ($_SESSION['role'] ?? '') === 'admin')): ?>
+                                <a href="delete_review.php?id=<?= $review['review_id'] ?>" 
+                                   onclick="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรีวิวนี้?');" 
+                                   class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1">
+                                   🗑️ ลบรีวิว
+                                </a>
+                            <?php endif; ?>
                         </div>
                     </div>
 
