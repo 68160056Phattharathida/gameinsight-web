@@ -24,11 +24,11 @@
 - **ระบบดูแลความเรียบร้อย (Content Moderation):** ผู้ดูแลระบบสามารถลบรีวิวหรือคอมเมนต์ที่ละเมิดข้อตกลงได้
 
 ## 4. Draft ER Diagram
-- **users:** `user_id` (PK), `username`, `email`, `password_hash`, `role`, `agreed_terms`, `agreed_at`, `created_at`
-- **categories:** `category_id` (PK), `category_name`, `description`
-- **games:** `game_id` (PK), `category_id` (FK), `title`, `developer`, `cover_image`, `store_url`, `created_at`
-- **reviews:** `review_id` (PK), `game_id` (FK), `user_id` (FK), `title`, `content_pros`, `content_cons`, `rating`, `review_image`, `created_at`
-- **comments:** `comment_id` (PK), `review_id` (FK), `user_id` (FK), `comment_text`, `created_at`
+- **gi_users:** `user_id` (PK), `username`, `email`, `password_hash`, `role`, `agreed_terms`, `agreed_at`, `created_at`
+- **gi_categories:** `category_id` (PK), `category_name`, `description`
+- **gi_games:** `game_id` (PK), `category_id` (FK), `title`, `developer`, `cover_image`, `store_url`, `created_at`
+- **gi_reviews:** `review_id` (PK), `game_id` (FK), `user_id` (FK), `title`, `content_pros`, `content_cons`, `rating`, `review_image`, `created_at`
+- **gi_comments:** `comment_id` (PK), `review_id` (FK), `user_id` (FK), `comment_text`, `created_at`
 
 ## 5. Project Plan & GitHub Setup
 - **Milestone 1: Planning & Schema:** ออกแบบ Wireframe, ร่าง ToS และเขียน `schema.sql`
