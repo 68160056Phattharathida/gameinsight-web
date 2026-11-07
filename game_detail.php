@@ -306,21 +306,30 @@ $comment_stmt = $pdo->prepare("
                         <?php else: ?>
 
                             <?php foreach ($comments as $comm): ?>
-
                                 <div class="bg-pink-50/50 rounded-xl p-4">
                                     <div class="flex justify-between items-center mb-1 gap-4">
                                         <span class="font-semibold text-sm text-gray-900">
                                             <?= htmlspecialchars($comm['username']) ?>
                                         </span>
-
-                                        <span class="text-xs text-gray-400">
-                                            <?= htmlspecialchars($comm['created_at']) ?>
-                                        </span>
+                            
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs text-gray-400">
+                                                <?= htmlspecialchars($comm['created_at']) ?>
+                                            </span>
+                            
+                                            <!-- 📌 ปุ่มลบคอมเมนต์ (แสดงเฉพาะเจ้าของคอมเมนต์ หรือ Admin) -->
+                                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $comm['user_id'] || ($_SESSION['role'] ?? '') === 'admin')): ?>
+                                                <a href="delete_comment.php?id=<?= $comm['comment_id'] ?>&game_id=<?= $game_id ?>" 
+                                                   onclick="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบคอมเมนต์นี้?');" 
+                                                   class="text-xs text-red-500 hover:text-red-700 font-medium ml-2">
+                                                   🗑️ ลบ
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-
+                                            
                                     <p class="text-sm text-gray-600 whitespace-pre-line"><?= htmlspecialchars($comm['comment_text']) ?></p>
                                 </div>
-
                             <?php endforeach; ?>
 
                         <?php endif; ?>

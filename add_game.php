@@ -21,7 +21,6 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title'] ?? '');
     $developer = trim($_POST['developer'] ?? '');
-    $cover_image = trim($_POST['cover_image'] ?? '');
     $store_url = trim($_POST['store_url'] ?? '');
     
     $category_id = $_POST['category_id'] ?? '';
@@ -33,6 +32,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $content_cons = trim($_POST['content_cons'] ?? '');
     $user_id = $_SESSION['user_id'];
 
+    // --- ส่วนการจัดการรูปภาพ (ไฟล์อัปโหลด หรือ URL) ---
+    $cover_image = '';
+
+    // 1. ตรวจสอบว่ามีการเลือกไฟล์จากเครื่องหรือไม่
+    if (isset($_FILES['cover_file']) && $_FILES['cover_file']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['cover_file']['tmp_name'];
+        $fileName = $_FILES['cover_file']['name'];
+        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        if (in_array($fileExtension, $allowedExtensions)) {
+            $uploadFileDir = './uploads/';
+            if (!is_dir($uploadFileDir)) {
+                mkdir($uploadFileDir, 0755, true);
+            }
+
+            $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+            $dest_path = $uploadFileDir . $newFileName;
+
+            if (move_uploaded_file($fileTmpPath, $dest_path)) {
+                $cover_image = $dest_path; // บันทึก Path ไฟล์ในเครื่อง
+            }
+        }
+    }
+
+    // 2. ถ้าไม่ได้แนบไฟล์ ให้ใช้ URL ที่กรอกไว้แทน (ถ้ามี)
+    if (empty($cover_image) && !empty($_POST['cover_url'])) {
+        $cover_image = trim($_POST['cover_url']);
+    }
+
+    // Validation
     if (empty($title) || empty($review_title) || empty($content_pros) || empty($content_cons)) {
         $error = "กรุณากรอกข้อมูลที่จำเป็น (*) ให้ครบถ้วน";
     } else {
@@ -95,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         h3 { color: #0284c7; margin: 20px 0 10px 0; font-size: 1.1rem; }
         .form-group { margin-bottom: 16px; }
         label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95rem; }
-        input[type="text"], input[type="url"], select, textarea {
+        input[type="text"], input[type="url"], input[type="file"], select, textarea {
             width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; font-family: inherit;
         }
         textarea { resize: vertical; min-height: 80px; }
@@ -104,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .alert-error { background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 0.95rem; }
         .back-link { display: inline-block; margin-top: 15px; color: #64748b; text-decoration: none; font-size: 0.9rem; }
         .back-link:hover { text-decoration: underline; }
+        .or-divider { text-center; font-size: 0.8rem; color: #64748b; margin: 6px 0; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -115,7 +146,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="alert-error"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
-    <form method="POST" action="">
+    <!-- เพิ่ม enctype="multipart/form-data" เพื่อให้รองรับไฟล์อัปโหลด -->
+    <form method="POST" action="" enctype="multipart/form-data">
         <h3>1. ข้อมูลตัวเกม</h3>
         <div class="form-group">
             <label for="title">ชื่อเกม *</label>
@@ -142,9 +174,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" id="new_category" name="new_category" placeholder="เช่น Soulslike, Simulator">
         </div>
 
+        <!-- ส่วนเลือกรูปภาพรูป 2 ระบบ -->
         <div class="form-group">
-            <label for="cover_image">ลิงก์ URL รูปหน้าปกเกม</label>
-            <input type="url" id="cover_image" name="cover_image" placeholder="https://example.com/cover.jpg">
+            <label>รูปหน้าปกเกม</label>
+            <input type="file" id="cover_file" name="cover_file" accept="image/*">
+            <div class="or-divider">- หรือวาง URL รูปภาพด้านล่าง -</div>
+            <input type="url" id="cover_url" name="cover_url" placeholder="https://example.com/cover.jpg">
         </div>
 
         <div class="form-group">
