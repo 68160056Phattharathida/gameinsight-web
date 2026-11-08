@@ -51,67 +51,186 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เขียนรีวิวเกม: <?= htmlspecialchars($game['title']) ?> - GameInsight</title>
+    <title>เขียนรีวิวเกม: <?= htmlspecialchars($game['title']) ?> - ViewG [8-BIT ARCADE]</title>
+    <!-- Google Fonts 8-BIT & Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 15px; color: #1e293b; }
-        .card { background: white; max-width: 600px; margin: 0 auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        h2 { margin-top: 0; color: #0f172a; }
-        .game-tag { color: #0284c7; font-weight: bold; margin-bottom: 20px; font-size: 1.1rem; }
-        .form-group { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95rem; }
-        input[type="text"], input[type="number"], textarea, select {
-            width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem;
+        :root {
+            --bg-dark: #0a0c13;
+            --panel-bg: #131722;
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-green: #00ff66;
+            --neon-yellow: #ffe600;
+            --text-main: #f1f5f9;
         }
-        textarea { resize: vertical; min-height: 80px; }
-        .btn-submit { width: 100%; padding: 12px; background-color: #10b981; color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; }
-        .btn-submit:hover { background-color: #059669; }
-        .back-link { display: inline-block; margin-top: 15px; color: #64748b; text-decoration: none; font-size: 0.9rem; }
-        .back-link:hover { text-decoration: underline; }
-        .alert-error { background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 20px; }
+
+        * { box-sizing: border-box; image-rendering: pixelated; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-main);
+            font-family: 'Prompt', sans-serif;
+            min-height: 100vh;
+        }
+
+        .pixel-text { font-family: 'Press Start 2P', monospace; }
+
+        /* Navbar Header */
+        nav {
+            background: var(--panel-bg);
+            border-bottom: 4px solid var(--neon-cyan);
+            box-shadow: 0 4px 0px #000;
+            padding: 16px 24px;
+        }
+
+        .nav-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { font-size: 20px; color: var(--neon-cyan); text-decoration: none; text-shadow: 2px 2px 0px #000; }
+
+        .pixel-btn {
+            display: inline-block;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            padding: 8px 14px;
+            color: #000;
+            background-color: var(--neon-green);
+            border: 2px solid #fff;
+            box-shadow: 3px 3px 0px #000;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.08s, box-shadow 0.08s;
+        }
+
+        .pixel-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+            background-color: var(--neon-yellow);
+        }
+
+        .pixel-btn-cancel { background: #334155; color: #fff; }
+
+        main { max-width: 650px; margin: 40px auto; padding: 0 16px; }
+
+        .pixel-card {
+            background: var(--panel-bg);
+            border: 3px solid var(--neon-cyan);
+            box-shadow: 6px 6px 0px #000;
+            padding: 32px;
+            border-radius: 8px;
+        }
+
+        .game-subtitle {
+            text-align: center;
+            color: var(--neon-cyan);
+            font-size: 15px;
+            margin-bottom: 24px;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 11px; color: #94a3b8; }
+        
+        .form-control {
+            width: 100%;
+            padding: 11px;
+            background: #080a0f;
+            border: 2px solid #334155;
+            color: #fff;
+            font-family: 'Prompt', sans-serif;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-control:focus { border-color: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,240,255,0.2); }
+
+        textarea.form-control { resize: vertical; min-height: 90px; }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+
+        .alert-danger {
+            background: #2b0813;
+            border: 2px solid var(--neon-pink);
+            color: #fecdd3;
+            padding: 12px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 3px 3px 0px #000;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>✍️ เขียนรีวิวเกม</h2>
-    <div class="game-tag">🎮 <?= htmlspecialchars($game['title']) ?></div>
-
-    <?php if (!empty($error)): ?>
-        <div class="alert-error"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
-
-    <form method="POST" action="">
-        <div class="form-group">
-            <label for="title">หัวข้อรีวิว</label>
-            <input type="text" id="title" name="title" placeholder="เช่น สุดยอดเกมแนว Souls ที่ดีที่สุดแห่งปี" required>
+    <nav>
+        <div class="nav-container">
+            <a href="games.php" class="logo pixel-text">🎮 ViewG</a>
+            <a href="game_detail.php?game_id=<?= $game_id ?>" class="pixel-btn pixel-btn-cancel">CANCEL</a>
         </div>
+    </nav>
 
-        <div class="form-group">
-            <label for="rating">ให้คะแนนเกม (1 - 5 ดาว)</label>
-            <select id="rating" name="rating" required>
-                <option value="5">⭐⭐⭐⭐⭐ (5/5 ยอดเยี่ยม)</option>
-                <option value="4">⭐⭐⭐⭐ (4/5 ดีมาก)</option>
-                <option value="3">⭐⭐⭐ (3/5 พอใช้)</option>
-                <option value="2">⭐⭐ (2/5 ควรปรับปรุง)</option>
-                <option value="1">⭐ (1/5 ไม่แนะนำ)</option>
-            </select>
+    <main>
+        <div class="pixel-card">
+            <h2 class="pixel-text" style="font-size: 16px; color: var(--neon-yellow); margin-top: 0; text-align: center;">
+                ✍️ เขียนรีวิวเกม
+            </h2>
+            <div class="game-subtitle">
+                🎮 <?= htmlspecialchars($game['title']) ?>
+            </div>
+
+            <?php if (!empty($error)): ?>
+                <div class="alert-danger"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
+
+            <form method="POST" action="">
+                <div class="form-group">
+                    <label for="title" class="pixel-text">REVIEW TITLE *</label>
+                    <input type="text" id="title" name="title" class="form-control" placeholder="เช่น สุดยอดเกมแนว Souls ที่ดีที่สุดแห่งปี" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="rating" class="pixel-text">RATING (1 - 5 STARS) *</label>
+                    <select id="rating" name="rating" class="form-control" required>
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5 ยอดเยี่ยม)</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5 ดีมาก)</option>
+                        <option value="3">⭐⭐⭐ (3/5 พอใช้)</option>
+                        <option value="2">⭐⭐ (2/5 ควรปรับปรุง)</option>
+                        <option value="1">⭐ (1/5 ไม่แนะนำ)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="content_pros" class="pixel-text" style="color: var(--neon-green);">✅ PROS (ข้อดี) *</label>
+                    <textarea id="content_pros" name="content_pros" class="form-control" placeholder="ระบุสิ่งที่ชอบ เช่น ภาพสวย ระบบต่อสู้ลื่นไหล..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="content_cons" class="pixel-text" style="color: var(--neon-pink);">❌ CONS (ข้อเสีย) *</label>
+                    <textarea id="content_cons" name="content_cons" class="form-control" placeholder="ระบุสิ่งที่ไม่ชอบ เช่น ปัญหา Optimization, บั๊ก..." required></textarea>
+                </div>
+
+                <button type="submit" class="pixel-btn submit-btn">POST REVIEW</button>
+            </form>
         </div>
-
-        <div class="form-group">
-            <label for="content_pros">✅ ข้อดี (Pros)</label>
-            <textarea id="content_pros" name="content_pros" placeholder="ระบุสิ่งที่ชอบ เช่น ภาพสวย ระบบต่อสู้ลื่นไหล..." required></textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="content_cons">❌ ข้อเสีย (Cons)</label>
-            <textarea id="content_cons" name="content_cons" placeholder="ระบุสิ่งที่ไม่ชอบ เช่น ปัญหา Optimization, บั๊ก..." required></textarea>
-        </div>
-
-        <button type="submit" class="btn-submit">เผยแพร่รีวิว</button>
-    </form>
-
-    <a href="game_detail.php?game_id=<?= $game_id ?>" class="back-link">← ยกเลิกและกลับไปหน้ารายละเอียดเกม</a>
-</div>
+    </main>
 
 </body>
 </html>
