@@ -2,7 +2,7 @@
 session_start();
 require_once 'config/db.php';
 
-// ดึงรายการหมวดหมู่ทั้งหมดสำหรับทำแถบ Filter (เปลี่ยนเป็น gi_categories)
+// 1. ดึงรายการหมวดหมู่ทั้งหมดสำหรับทำแถบ Filter
 try {
     $cat_stmt = $pdo->query("SELECT category_id, category_name FROM gi_categories ORDER BY category_name ASC");
     $categories = $cat_stmt->fetchAll();
@@ -10,11 +10,19 @@ try {
     $categories = [];
 }
 
+// 2. ดึงรายชื่อเกมทั้งหมดสำหรับระบบ Auto-suggest (แนะนำชื่อขณะพิมพ์)
+try {
+    $title_stmt = $pdo->query("SELECT title FROM gi_games ORDER BY title ASC");
+    $all_game_titles = $title_stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {
+    $all_game_titles = [];
+}
+
 // รับค่าการค้นหาและการกรองหมวดหมู่
 $search = trim($_GET['search'] ?? '');
 $selected_category = $_GET['category'] ?? '';
 
-// สร้างคำสั่ง SQL ดึงรายชื่อเกม (เปลี่ยนเป็น gi_games และ gi_categories)
+// 3. สร้างคำสั่ง SQL ดึงรายชื่อเกม (ใช้ LOWER เพื่อให้ค้นหาตัวพิมพ์เล็ก-ใหญ่ได้ตรงกัน 100%)
 $sql = "SELECT g.game_id, g.title, g.developer, g.cover_image, g.store_url, c.category_name 
         FROM gi_games g 
         LEFT JOIN gi_categories c ON g.category_id = c.category_id 
@@ -22,7 +30,7 @@ $sql = "SELECT g.game_id, g.title, g.developer, g.cover_image, g.store_url, c.ca
 $params = [];
 
 if (!empty($search)) {
-    $sql .= " AND (g.title LIKE ? OR g.developer LIKE ?)";
+    $sql .= " AND (LOWER(g.title) LIKE LOWER(?) OR LOWER(g.developer) LIKE LOWER(?))";
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
@@ -47,198 +55,320 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>คลังเกมและหมวดหมู่ - GameInsight</title>
+    <title>คลังเกมและหมวดหมู่ - ViewG [8-BIT ARCADE]</title>
+    <!-- Pixel Font (Press Start 2P) และ Prompt คมชัด -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; }
+        :root {
+            --bg-dark: #0a0c13;
+            --panel-bg: #131722;
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-green: #00ff66;
+            --neon-yellow: #ffe600;
+            --text-main: #f1f5f9;
+        }
+
+        * {
+            box-sizing: border-box;
+            image-rendering: pixelated;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f1f5f9;
-            color: #1e293b;
             margin: 0;
             padding: 0;
+            background-color: var(--bg-dark);
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-main);
+            font-family: 'Prompt', sans-serif;
         }
+
+        .pixel-font {
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Navbar */
         header {
-            background-color: #0f172a;
-            color: white;
-            padding: 1.5rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 16px 20px;
+            background: var(--panel-bg);
+            border: 4px solid var(--neon-cyan);
+            box-shadow: 6px 6px 0px #000;
+            margin-bottom: 24px;
         }
-        header h1 { margin: 0; font-size: 1.5rem; }
+
+        .logo {
+            font-size: 20px;
+            color: var(--neon-cyan);
+            text-shadow: 3px 3px 0px #000;
+            text-decoration: none;
+        }
+
+        .header-links {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
         .header-links a {
             color: #94a3b8;
             text-decoration: none;
-            margin-left: 1rem;
+            font-size: 14px;
         }
-        .header-links a:hover { color: white; }
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+
+        .header-links a:hover {
+            color: var(--neon-cyan);
         }
-        .filter-section {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .filter-section input[type="text"], .filter-section select {
-            padding: 0.6rem 1rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            flex: 1;
-            min-width: 200px;
-        }
-        .btn-search {
-            padding: 0.6rem 1.5rem;
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-        .btn-search:hover { background-color: #1d4ed8; }
-        .btn-reset {
-            padding: 0.6rem 1rem;
-            background-color: #e2e8f0;
-            color: #475569;
+
+        /* 8-bit Buttons */
+        .pixel-btn {
+            display: inline-block;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            padding: 9px 14px;
+            color: #000;
+            background-color: var(--neon-green);
+            border: 3px solid #ffffff;
+            box-shadow: 4px 4px 0px #000;
             text-decoration: none;
-            border-radius: 6px;
-            font-size: 0.95rem;
+            cursor: pointer;
+            transition: transform 0.08s, box-shadow 0.08s;
+            text-align: center;
+        }
+
+        .pixel-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
+            background-color: var(--neon-yellow);
+        }
+
+        .pixel-btn-danger {
+            background-color: var(--neon-pink);
+            color: #fff;
+        }
+
+        .pixel-btn-danger:hover {
+            background-color: #ff3344;
+            color: #fff;
+        }
+
+        .badge-admin {
+            background: var(--neon-pink);
+            color: #fff;
+            padding: 3px 6px;
+            font-size: 10px;
+            border: 2px solid #fff;
+            font-weight: bold;
+        }
+
+        /* Filter Panel */
+        .filter-section {
+            background: var(--panel-bg);
+            border: 3px solid #fff;
+            box-shadow: 5px 5px 0px #000;
+            padding: 16px;
+            margin-bottom: 28px;
             display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
             align-items: center;
         }
+
+        input[type="text"], select {
+            background: #080a0f;
+            border: 3px solid #fff;
+            color: #fff;
+            padding: 9px 12px;
+            font-family: 'Prompt', sans-serif;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--neon-cyan);
+        }
+
+        /* Game Grid */
         .game-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 22px;
         }
+
         .game-card {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            background: var(--panel-bg);
+            border: 3px solid #fff;
+            box-shadow: 6px 6px 0px #000;
             display: flex;
             flex-direction: column;
+            transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
         }
-        .game-card img {
+
+        .game-card:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 9px 9px 0px var(--neon-cyan);
+            border-color: var(--neon-cyan);
+        }
+
+        .cover-wrapper {
+            position: relative;
             width: 100%;
-            height: 180px;
-            object-fit: cover;
-            background-color: #cbd5e1;
+            height: 175px;
+            background: #000;
+            border-bottom: 3px solid #fff;
+            overflow: hidden;
         }
+
+        .cover-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badge-cat {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #000;
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            padding: 3px 6px;
+            font-size: 9px;
+            font-family: 'Press Start 2P', monospace;
+        }
+
         .card-body {
-            padding: 1.25rem;
-            flex: 1;
+            padding: 16px;
             display: flex;
             flex-direction: column;
+            flex: 1;
         }
-        .badge {
-            display: inline-block;
-            background-color: #e0f2fe;
-            color: #0369a1;
-            font-size: 0.8rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            align-self: flex-start;
-            margin-bottom: 0.5rem;
-        }
+
         .game-title {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.15rem;
-            color: #0f172a;
+            margin: 0 0 6px 0;
+            font-size: 17px;
+            color: #fff;
         }
+
         .developer {
-            color: #64748b;
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 14px;
         }
+
         .card-actions {
             margin-top: auto;
             display: flex;
-            gap: 0.5rem;
+            gap: 8px;
+            flex-wrap: wrap;
         }
-        .btn-review {
-            flex: 1;
-            text-align: center;
-            padding: 0.5rem;
-            background-color: #0ea5e9;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-        .btn-store {
-            flex: 1;
-            text-align: center;
-            padding: 0.5rem;
-            background-color: #334155;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
+
         .no-data {
-            text-align: center;
-            color: #64748b;
             grid-column: 1 / -1;
-            padding: 3rem;
-            background: white;
-            border-radius: 8px;
+            text-align: center;
+            padding: 48px;
+            background: var(--panel-bg);
+            border: 3px dashed #334155;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>GameInsight</h1>
+    <a href="games.php" class="logo pixel-font">🎮 ViewG</a>
     <div class="header-links">
         <a href="games.php">หน้ารายการเกม</a>
-        <a href="register.php">สมัครสมาชิก</a>
-        <a href="terms.php">ข้อกำหนด</a>
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <span style="color: var(--neon-cyan); font-weight: 600;">👤 <?= htmlspecialchars($_SESSION['username'] ?? 'สมาชิก') ?></span>
+
+            <!-- แสดงป้ายแอดมินสำหรับบทบาท admin -->
+            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                <span class="badge-admin">ADMIN</span>
+            <?php endif; ?>
+
+            <a href="logout.php" class="pixel-btn pixel-btn-danger" style="padding: 6px 10px;">ออก</a>
+        <?php else: ?>
+            <a href="login.php" class="pixel-btn" style="background: var(--neon-green);">เข้าสู่ระบบ</a>
+            <a href="register.php" class="pixel-btn" style="background: var(--neon-cyan);">สมัครสมาชิก</a>
+        <?php endif; ?>
+        <a href="terms.php" style="color: #64748b; font-size: 13px;">ข้อกำหนด</a>
     </div>
 </header>
 
 <div class="container">
-    <form method="GET" action="games.php" class="filter-section">
-        <input type="text" name="search" placeholder="ค้นหาชื่อเกม หรือผู้พัฒนา..." value="<?= htmlspecialchars($search) ?>">
-        
-        <select name="category">
-            <option value="">-- ทุกหมวดหมู่ --</option>
-            <?php foreach ($categories as $cat): ?>
-                <option value="<?= $cat['category_id'] ?>" <?= $selected_category == $cat['category_id'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($cat['category_name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+    <div class="filter-section">
+        <form method="GET" action="games.php" style="display: flex; gap: 10px; flex: 1; flex-wrap: wrap; align-items: center;">
+            <!-- ช่องค้นหาผูกกับ datalist id="game-list" สำหรับ Auto-suggest -->
+            <input type="text" name="search" list="game-list" autocomplete="off" placeholder="ค้นหาชื่อเกม หรือผู้พัฒนา..." value="<?= htmlspecialchars($search) ?>" style="flex: 2; min-width: 200px;">
+            
+            <!-- รายการตัวเลือกแนะนำอัตโนมัติ -->
+            <datalist id="game-list">
+                <?php foreach ($all_game_titles as $g_title): ?>
+                    <option value="<?= htmlspecialchars($g_title) ?>"></option>
+                <?php endforeach; ?>
+            </datalist>
 
-        <button type="submit" class="btn-search">ค้นหา</button>
-        <?php if (!empty($search) || !empty($selected_category)): ?>
-            <a href="games.php" class="btn-reset">ล้างค่า</a>
+            <select name="category" style="flex: 1; min-width: 170px;">
+                <option value="">🕹️ ทุกหมวดหมู่</option>
+                <?php foreach ($categories as $cat): ?>
+                    <option value="<?= $cat['category_id'] ?>" <?= $selected_category == $cat['category_id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($cat['category_name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+            <button type="submit" class="pixel-btn">SEARCH</button>
+            <?php if (!empty($search) || !empty($selected_category)): ?>
+                <a href="games.php" class="pixel-btn" style="background: #334155; color: #fff;">RESET</a>
+            <?php endif; ?>
+        </form>
+
+        <!-- ปุ่มเพิ่มเกมใหม่สำหรับผู้ใช้ที่เข้าสู่ระบบแล้ว -->
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <a href="add_game.php" class="pixel-btn" style="background: var(--neon-yellow); color: #000;">
+                ➕ เพิ่มเกม/รีวิว
+            </a>
         <?php endif; ?>
-    </form>
+    </div>
 
     <div class="game-grid">
         <?php if (!empty($games)): ?>
             <?php foreach ($games as $game): ?>
                 <div class="game-card">
-                    <img src="<?= htmlspecialchars($game['cover_image'] ?: 'https://via.placeholder.com/300x180?text=No+Cover') ?>" alt="<?= htmlspecialchars($game['title']) ?>">
+                    <div class="cover-wrapper">
+                        <img src="<?= htmlspecialchars($game['cover_image'] ?: 'https://via.placeholder.com/300x180?text=No+Cover') ?>" alt="<?= htmlspecialchars($game['title']) ?>">
+                        <span class="badge-cat"><?= htmlspecialchars($game['category_name'] ?: 'ETC') ?></span>
+                    </div>
                     <div class="card-body">
-                        <span class="badge"><?= htmlspecialchars($game['category_name'] ?: 'ทั่วไป') ?></span>
                         <h3 class="game-title"><?= htmlspecialchars($game['title']) ?></h3>
-                        <div class="developer">ผู้พัฒนา: <?= htmlspecialchars($game['developer'] ?: 'ไม่ระบุ') ?></div>
+                        <div class="developer">Dev: <?= htmlspecialchars($game['developer'] ?: 'ไม่ระบุ') ?></div>
                         
                         <div class="card-actions">
-                            <a href="game_detail.php?game_id=<?= $game['game_id'] ?>" class="btn-review">ดูรีวิวเกมนี้</a>
+                            <a href="game_detail.php?game_id=<?= $game['game_id'] ?>" class="pixel-btn" style="background: var(--neon-cyan); flex: 1;">รีวิว</a>
+                            
                             <?php if (!empty($game['store_url'])): ?>
-                                <a href="<?= htmlspecialchars($game['store_url']) ?>" target="_blank" class="btn-store">ร้านค้า</a>
+                                <a href="<?= htmlspecialchars($game['store_url']) ?>" target="_blank" class="pixel-btn" style="background: #27272a; color: #fff; flex: 1;">ร้านค้า ↗</a>
+                            <?php endif; ?>
+
+                            <!-- ปุ่มลบเกม แสดงเฉพาะแอดมิน -->
+                            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                                <a href="delete_game.php?game_id=<?= $game['game_id'] ?>" 
+                                   onclick="return confirm('คุณเป็นแอดมิน ยืนยันที่จะลบเกมนี้ออกจาก ViewG หรือไม่?')" 
+                                   class="pixel-btn pixel-btn-danger">
+                                   ลบ
+                                </a>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -246,6 +376,7 @@ try {
             <?php endforeach; ?>
         <?php else: ?>
             <div class="no-data">
+                <p class="pixel-font" style="color: var(--neon-pink); font-size: 13px;">[ NO GAMES FOUND ]</p>
                 <p>ยังไม่มีข้อมูลเกมในระบบ หรือไม่พบเกมที่ค้นหา</p>
             </div>
         <?php endif; ?>

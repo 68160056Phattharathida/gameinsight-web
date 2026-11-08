@@ -1,8 +1,8 @@
 <?php
 $host = "localhost";
-$dbname = "gameinsight"; // เปลี่ยนเป็นชื่อฐานข้อมูลใน phpMyAdmin
-$username = "root";
-$password = "";
+$dbname = "your_database_name"; // ใส่ชื่อฐานข้อมูล
+$username = "your_username";  // ใส่ชื่อผู้ใช้ฐานข้อมูล
+$password = "your_password"; // ใส่รหัสผ่านฐานข้อมูล
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password, [
@@ -12,3 +12,4 @@ try {
 } catch (PDOException $e) {
     die("เชื่อมต่อฐานข้อมูลล้มเหลว: " . $e->getMessage());
 }
+
