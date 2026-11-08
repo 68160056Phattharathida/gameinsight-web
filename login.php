@@ -129,20 +129,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-family: 'Press Start 2P', monospace;
             font-size: 10px;
             padding: 8px 12px;
-            color: #000;
-            background-color: var(--neon-cyan);
+            color: #000000 !important;
+            background-color: var(--neon-pink);
             border: 2px solid #fff;
             box-shadow: 3px 3px 0px #000;
             text-decoration: none;
             cursor: pointer;
-            transition: transform 0.08s, box-shadow 0.08s;
+            transition: transform 0.08s, box-shadow 0.08s, background-color 0.08s;
             text-align: center;
+            font-weight: bold;
         }
 
         .pixel-btn:hover {
             transform: translate(2px, 2px);
             box-shadow: 1px 1px 0px #000;
             background-color: var(--neon-yellow);
+            color: #000000 !important;
+        }
+
+        .pixel-btn-cyan {
+            background-color: var(--neon-cyan);
+            color: #000000 !important;
+        }
+
+        .pixel-btn-cyan:hover {
+            background-color: var(--neon-yellow);
+            color: #000000 !important;
         }
 
         /* Container Layout */
@@ -224,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .submit-btn {
             width: 100%;
             padding: 12px;
-            font-size: 12px;
+            font-size: 11px;
             margin-top: 10px;
         }
 
@@ -257,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="games.php" class="logo pixel-text">🎮 ViewG</a>
             <div class="nav-links">
                 <a href="games.php">หน้ารายการเกม</a>
-                <a href="register.php" class="pixel-btn" style="background: var(--neon-green);">สมัครสมาชิก</a>
+                <a href="register.php" class="pixel-btn pixel-btn-cyan">สมัครสมาชิก</a>
             </div>
         </div>
     </nav>

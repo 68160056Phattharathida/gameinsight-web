@@ -138,30 +138,42 @@ try {
             font-family: 'Press Start 2P', monospace;
             font-size: 10px;
             padding: 9px 14px;
-            color: #000;
-            background-color: var(--neon-green);
+            color: #000000 !important;
+            background-color: var(--neon-pink);
             border: 3px solid #ffffff;
             box-shadow: 4px 4px 0px #000;
             text-decoration: none;
             cursor: pointer;
-            transition: transform 0.08s, box-shadow 0.08s;
+            transition: transform 0.08s, box-shadow 0.08s, background-color 0.08s;
             text-align: center;
+            font-weight: bold;
         }
 
         .pixel-btn:hover {
             transform: translate(2px, 2px);
             box-shadow: 2px 2px 0px #000;
             background-color: var(--neon-yellow);
+            color: #000000 !important;
+        }
+
+        .pixel-btn-cyan {
+            background-color: var(--neon-cyan);
+            color: #000000 !important;
+        }
+
+        .pixel-btn-cyan:hover {
+            background-color: var(--neon-yellow);
+            color: #000000 !important;
         }
 
         .pixel-btn-danger {
             background-color: var(--neon-pink);
-            color: #fff;
+            color: #ffffff !important;
         }
 
         .pixel-btn-danger:hover {
             background-color: #ff3344;
-            color: #fff;
+            color: #ffffff !important;
         }
 
         .badge-admin {
@@ -282,6 +294,51 @@ try {
             background: var(--panel-bg);
             border: 3px dashed #334155;
         }
+
+        /* Floating Pixel Mascot */
+        .cyber-mascot {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            animation: pixelFloat 3s ease-in-out infinite;
+            user-select: none;
+        }
+
+        .cyber-mascot:hover .mascot-sprite {
+            transform: scale(1.2);
+        }
+
+        .mascot-sprite {
+            font-size: 42px;
+            filter: drop-shadow(0 0 10px var(--neon-cyan, #00f0ff));
+            transition: transform 0.2s;
+        }
+
+        .mascot-badge {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: #000;
+            background-color: var(--neon-yellow, #ffe600);
+            border: 2px solid #fff;
+            box-shadow: 3px 3px 0px #000;
+            padding: 4px 6px;
+            margin-top: 4px;
+        }
+
+        @keyframes pixelFloat {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @media (max-width: 768px) {
+            .cyber-mascot { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -300,8 +357,8 @@ try {
 
             <a href="logout.php" class="pixel-btn pixel-btn-danger" style="padding: 6px 10px;">ออก</a>
         <?php else: ?>
-            <a href="login.php" class="pixel-btn" style="background: var(--neon-green);">เข้าสู่ระบบ</a>
-            <a href="register.php" class="pixel-btn" style="background: var(--neon-cyan);">สมัครสมาชิก</a>
+            <a href="login.php" class="pixel-btn" style="background: var(--neon-pink);">เข้าสู่ระบบ</a>
+            <a href="register.php" class="pixel-btn pixel-btn-cyan">สมัครสมาชิก</a>
         <?php endif; ?>
         <a href="terms.php" style="color: #64748b; font-size: 13px;">ข้อกำหนด</a>
     </div>
@@ -329,15 +386,15 @@ try {
                 <?php endforeach; ?>
             </select>
 
-            <button type="submit" class="pixel-btn">SEARCH</button>
+            <button type="submit" class="pixel-btn" style="background: var(--neon-pink);">SEARCH</button>
             <?php if (!empty($search) || !empty($selected_category)): ?>
-                <a href="games.php" class="pixel-btn" style="background: #334155; color: #fff;">RESET</a>
+                <a href="games.php" class="pixel-btn" style="background: #334155; color: #fff !important;">RESET</a>
             <?php endif; ?>
         </form>
 
         <!-- ปุ่มเพิ่มเกมใหม่สำหรับผู้ใช้ที่เข้าสู่ระบบแล้ว -->
         <?php if (isset($_SESSION['user_id'])): ?>
-            <a href="add_game.php" class="pixel-btn" style="background: var(--neon-yellow); color: #000;">
+            <a href="add_game.php" class="pixel-btn" style="background: var(--neon-yellow);">
                 ➕ เพิ่มเกม/รีวิว
             </a>
         <?php endif; ?>
@@ -356,10 +413,10 @@ try {
                         <div class="developer">Dev: <?= htmlspecialchars($game['developer'] ?: 'ไม่ระบุ') ?></div>
                         
                         <div class="card-actions">
-                            <a href="game_detail.php?game_id=<?= $game['game_id'] ?>" class="pixel-btn" style="background: var(--neon-cyan); flex: 1;">รีวิว</a>
+                            <a href="game_detail.php?game_id=<?= $game['game_id'] ?>" class="pixel-btn pixel-btn-cyan" style="flex: 1;">รีวิว</a>
                             
                             <?php if (!empty($game['store_url'])): ?>
-                                <a href="<?= htmlspecialchars($game['store_url']) ?>" target="_blank" class="pixel-btn" style="background: #27272a; color: #fff; flex: 1;">ร้านค้า ↗</a>
+                                <a href="<?= htmlspecialchars($game['store_url']) ?>" target="_blank" class="pixel-btn" style="background: #27272a; color: #fff !important; flex: 1;">ร้านค้า ↗</a>
                             <?php endif; ?>
 
                             <!-- ปุ่มลบเกม แสดงเฉพาะแอดมิน -->
@@ -367,7 +424,7 @@ try {
                                 <a href="delete_game.php?game_id=<?= $game['game_id'] ?>" 
                                    onclick="return confirm('คุณเป็นแอดมิน ยืนยันที่จะลบเกมนี้ออกจาก ViewG หรือไม่?')" 
                                    class="pixel-btn pixel-btn-danger">
-                                   ลบ
+                                    ลบ
                                 </a>
                             <?php endif; ?>
                         </div>
@@ -382,6 +439,24 @@ try {
         <?php endif; ?>
     </div>
 </div>
+
+<!-- Floating Pixel Mascot -->
+<div class="cyber-mascot" id="mascotBtn" onclick="scrollToTop()">
+    <div class="mascot-sprite" id="mascotIcon">👾</div>
+    <div class="mascot-badge">PRESS START</div>
+</div>
+
+<script>
+    const mascots = ['👾', '🕹️', '🤖', '👻', '🛸', '👾', '🎮', '⚔️'];
+    function scrollToTop() {
+        // สุ่มเปลี่ยนรูปน้อง
+        const randomMascot = mascots[Math.floor(Math.random() * mascots.length)];
+        document.getElementById('mascotIcon').innerText = randomMascot;
+        
+        // เลื่อนหน้าจอขึ้นบนสุด
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
 
 </body>
 </html>
