@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/db.php';
+require_once __DIR__ . '/config/db.php';
 
 // ถ้าล็อกอินอยู่แล้ว ให้เปลี่ยนหน้าไป games.php
 if (isset($_SESSION['user_id'])) {
@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username_email) || empty($password)) {
         $error = "กรุณากรอกข้อมูลให้ครบถ้วน";
     } else {
-        // ค้นหาผู้ใช้จาก username หรือ email ในตาราง users
+        // ค้นหาผู้ใช้จาก username หรือ email ในตาราง gi_users
         $stmt = $pdo->prepare("SELECT * FROM gi_users WHERE username = :input OR email = :input LIMIT 1");
         $stmt->execute(['input' => $username_email]);
         $user = $stmt->fetch();
@@ -46,48 +46,255 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เข้าสู่ระบบ - GameInsight</title>
+    <title>เข้าสู่ระบบ - ViewG [8-BIT ARCADE]</title>
+    <!-- Pixel Font สำหรับหัวข้อ/ปุ่ม และ Prompt สำหรับภาษาไทย -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .login-card { background-color: #2a2a2a; padding: 30px; border-radius: 8px; width: 100%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        h2 { text-align: center; margin-bottom: 20px; color: #00d2d3; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; }
-        .form-group input { width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; box-sizing: border-box; }
-        .btn { width: 100%; padding: 10px; background-color: #00d2d3; border: none; border-radius: 4px; color: #1a1a1a; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        .btn:hover { background-color: #00a8a9; }
-        .alert { background-color: #ff4d4d; color: white; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; text-align: center; }
-        .register-link { text-align: center; margin-top: 15px; font-size: 14px; }
-        .register-link a { color: #00d2d3; text-decoration: none; }
+        :root {
+            --bg-dark: #0a0c13;
+            --panel-bg: #131722;
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-green: #00ff66;
+            --neon-yellow: #ffe600;
+            --text-main: #f1f5f9;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            image-rendering: pixelated; 
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-main);
+            font-family: 'Prompt', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pixel-text { 
+            font-family: 'Press Start 2P', monospace; 
+        }
+
+        /* Navbar Header */
+        nav {
+            background: var(--panel-bg);
+            border-bottom: 4px solid var(--neon-cyan);
+            box-shadow: 0 4px 0px #000;
+            padding: 16px 24px;
+        }
+
+        .nav-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            color: var(--neon-cyan);
+            text-decoration: none;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .nav-links { 
+            display: flex; 
+            align-items: center; 
+            gap: 14px; 
+        }
+
+        .nav-links a { 
+            color: #94a3b8; 
+            text-decoration: none; 
+            font-size: 14px; 
+        }
+
+        .nav-links a:hover { 
+            color: var(--neon-cyan); 
+        }
+
+        /* Pixel Buttons */
+        .pixel-btn {
+            display: inline-block;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            padding: 8px 12px;
+            color: #000;
+            background-color: var(--neon-cyan);
+            border: 2px solid #fff;
+            box-shadow: 3px 3px 0px #000;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.08s, box-shadow 0.08s;
+            text-align: center;
+        }
+
+        .pixel-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+            background-color: var(--neon-yellow);
+        }
+
+        /* Container Layout */
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 16px;
+        }
+
+        .login-card {
+            background: var(--panel-bg);
+            border: 3px solid var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2), 6px 6px 0px #000;
+            padding: 32px;
+            width: 100%;
+            max-width: 420px;
+            border-radius: 12px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .login-header h2 {
+            margin: 0 0 8px 0;
+            font-size: 22px;
+            color: #fff;
+        }
+
+        .login-header .sub-title {
+            font-size: 9px;
+            color: var(--neon-cyan);
+            letter-spacing: 1px;
+        }
+
+        .alert-danger {
+            background: #2b0813;
+            border: 2px solid var(--neon-pink);
+            color: #fecdd3;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 3px 3px 0px #000;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: #080a0f;
+            border: 2px solid #334155;
+            color: #fff;
+            font-family: 'Prompt', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px dashed #334155;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .register-link a {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+            color: var(--neon-yellow);
+        }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <h2>เข้าสู่ระบบ</h2>
-
-    <?php if (!empty($error)): ?>
-        <div class="alert"><?php echo htmlspecialchars($error); ?></div>
-    <?php endif; ?>
-
-    <form action="login.php" method="POST">
-        <div class="form-group">
-            <label for="username_email">ชื่อผู้ใช้ หรือ อีเมล</label>
-            <input type="text" id="username_email" name="username_email" required value="<?php echo isset($_POST['username_email']) ? htmlspecialchars($_POST['username_email']) : ''; ?>">
+    <!-- Navbar Header -->
+    <nav>
+        <div class="nav-container">
+            <a href="games.php" class="logo pixel-text">🎮 ViewG</a>
+            <div class="nav-links">
+                <a href="games.php">หน้ารายการเกม</a>
+                <a href="register.php" class="pixel-btn" style="background: var(--neon-green);">สมัครสมาชิก</a>
+            </div>
         </div>
+    </nav>
 
-        <div class="form-group">
-            <label for="password">รหัสผ่าน</label>
-            <input type="password" id="password" name="password" required>
+    <!-- Main Content Card -->
+    <main>
+        <div class="login-card">
+            <div class="login-header">
+                <h2>🎮 เข้าสู่ระบบ</h2>
+                <div class="pixel-text sub-title">SYSTEM LOGIN ACCESS</div>
+            </div>
+
+            <?php if (!empty($error)): ?>
+                <div class="alert-danger"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
+
+            <form action="login.php" method="POST">
+                <div class="form-group">
+                    <label for="username_email" class="pixel-text">USERNAME / EMAIL</label>
+                    <input type="text" id="username_email" name="username_email" required 
+                           placeholder="กรอกชื่อผู้ใช้ หรือ อีเมล"
+                           value="<?= isset($_POST['username_email']) ? htmlspecialchars($_POST['username_email']) : '' ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="pixel-text">PASSWORD</label>
+                    <input type="password" id="password" name="password" required placeholder="กรอกรหัสผ่าน">
+                </div>
+
+                <button type="submit" class="pixel-btn submit-btn">LOG IN</button>
+            </form>
+
+            <div class="register-link">
+                ยังไม่มีบัญชี? <a href="register.php">สมัครสมาชิกที่นี่</a>
+            </div>
         </div>
-
-        <button type="submit" class="btn">เข้าสู่ระบบ</button>
-    </form>
-
-    <div class="register-link">
-        ยังไม่มีบัญชี? <a href="register.php">สมัครสมาชิก</a>
-    </div>
-</div>
+    </main>
 
 </body>
 </html>

@@ -263,9 +263,14 @@ $comment_stmt = $pdo->prepare("
                     <a href="<?= htmlspecialchars($game['store_url']) ?>" target="_blank" class="pixel-btn" style="background: var(--neon-cyan);">
                         STORE PAGE ↗
                     </a>
-                <?php endif; ?>
-            </div>
-        </div>
+                    <?php endif; ?>
+                                <?php if (isset($_SESSION['user_id'])): ?>
+                                    <a href="edit_game.php?game_id=<?= $game['game_id'] ?>" class="pixel-btn pixel-btn-yellow" style="margin-left: 8px;">
+                                        ✏️ EDIT GAME
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
 
         <!-- Review Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
