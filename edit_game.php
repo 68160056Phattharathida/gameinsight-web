@@ -30,40 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $developer = trim($_POST['developer'] ?? '');
     $category_id = (int)($_POST['category_id'] ?? 0);
     $store_url = trim($_POST['store_url'] ?? '');
-    $cover_image = trim($_POST['cover_image'] ?? ''); // URL เดิม/ใส่เพิ่ม
-
-    // การจัดการอัปโหลดไฟล์รูปภาพ
-    if (isset($_FILES['cover_file']) && $_FILES['cover_file']['error'] === UPLOAD_ERR_OK) {
-        $fileTmpPath = $_FILES['cover_file']['tmp_name'];
-        $fileName = $_FILES['cover_file']['name'];
-        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-        // นามสกุลไฟล์ที่อนุญาต
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-
-        if (in_array($fileExtension, $allowedExtensions)) {
-            $uploadFileDir = 'uploads/';
-            if (!is_dir($uploadFileDir)) {
-                mkdir($uploadFileDir, 0755, true);
-            }
-
-            // ตั้งชื่อไฟล์ใหม่กันชื่อซ้ำ
-            $newFileName = time() . '_' . md5(uniqid()) . '.' . $fileExtension;
-            $dest_path = $uploadFileDir . $newFileName;
-
-            if (move_uploaded_file($fileTmpPath, $dest_path)) {
-                $cover_image = $dest_path; // ใช้พาธไฟล์รูปที่อัปโหลด
-            } else {
-                $error = "เกิดข้อผิดพลาดในการอัปโหลดไฟล์รูปภาพ";
-            }
-        } else {
-            $error = "อนุญาตเฉพาะไฟล์รูปภาพประเภท JPG, PNG, GIF, WEBP เท่านั้น";
-        }
-    }
+    $cover_image = trim($_POST['cover_image'] ?? '');
 
     if (empty($title)) {
         $error = "กรุณากรอกชื่อเกม";
-    } elseif (empty($error)) {
+    } else {
         $update_stmt = $pdo->prepare("
             UPDATE gi_games 
             SET title = ?, developer = ?, category_id = ?, store_url = ?, cover_image = ?
@@ -190,8 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p style="color: var(--neon-pink); font-size: 13px;"><?= htmlspecialchars($error) ?></p>
             <?php endif; ?>
 
-            <!-- เพิ่ม enctype="multipart/form-data" เพื่อรองรับการแนบไฟล์ -->
-            <form method="POST" enctype="multipart/form-data">
+            <form method="POST">
                 <div class="form-group">
                     <label class="pixel-text">GAME TITLE</label>
                     <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($game['title']) ?>" required>
@@ -218,15 +188,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="url" name="store_url" class="form-control" value="<?= htmlspecialchars($game['store_url'] ?? '') ?>">
                 </div>
 
-                <!-- ช่องแนบไฟล์รูปภาพจากเครื่อง -->
                 <div class="form-group">
-                    <label class="pixel-text">UPLOAD COVER IMAGE (FILE)</label>
-                    <input type="file" name="cover_file" class="form-control" accept="image/*">
-                </div>
-
-                <!-- ช่องระบุ URL รูปภาพ (สำรองไว้กรณีไม่มีไฟล์) -->
-                <div class="form-group">
-                    <label class="pixel-text">OR COVER IMAGE URL</label>
+                    <label class="pixel-text">COVER IMAGE URL</label>
                     <input type="text" name="cover_image" class="form-control" value="<?= htmlspecialchars($game['cover_image'] ?? '') ?>" placeholder="https://...">
                 </div>
 
