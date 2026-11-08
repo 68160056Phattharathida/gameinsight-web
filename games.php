@@ -2,7 +2,7 @@
 session_start();
 require_once 'config/db.php';
 
-// ดึงรายการหมวดหมู่ทั้งหมดสำหรับทำแถบ Filter
+// 1. ดึงรายการหมวดหมู่ทั้งหมดสำหรับทำแถบ Filter
 try {
     $cat_stmt = $pdo->query("SELECT category_id, category_name FROM gi_categories ORDER BY category_name ASC");
     $categories = $cat_stmt->fetchAll();
@@ -10,11 +10,19 @@ try {
     $categories = [];
 }
 
+// 2. ดึงรายชื่อเกมทั้งหมดสำหรับระบบ Auto-suggest (แนะนำชื่อขณะพิมพ์)
+try {
+    $title_stmt = $pdo->query("SELECT title FROM gi_games ORDER BY title ASC");
+    $all_game_titles = $title_stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {
+    $all_game_titles = [];
+}
+
 // รับค่าการค้นหาและการกรองหมวดหมู่
 $search = trim($_GET['search'] ?? '');
 $selected_category = $_GET['category'] ?? '';
 
-// สร้างคำสั่ง SQL ดึงรายชื่อเกม
+// 3. สร้างคำสั่ง SQL ดึงรายชื่อเกม (ใช้ LOWER เพื่อให้ค้นหาตัวพิมพ์เล็ก-ใหญ่ได้ตรงกัน 100%)
 $sql = "SELECT g.game_id, g.title, g.developer, g.cover_image, g.store_url, c.category_name 
         FROM gi_games g 
         LEFT JOIN gi_categories c ON g.category_id = c.category_id 
@@ -22,7 +30,7 @@ $sql = "SELECT g.game_id, g.title, g.developer, g.cover_image, g.store_url, c.ca
 $params = [];
 
 if (!empty($search)) {
-    $sql .= " AND (g.title LIKE ? OR g.developer LIKE ?)";
+    $sql .= " AND (LOWER(g.title) LIKE LOWER(?) OR LOWER(g.developer) LIKE LOWER(?))";
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
@@ -70,7 +78,6 @@ try {
             margin: 0;
             padding: 0;
             background-color: var(--bg-dark);
-            /* ลายตารางจำลองหน้าจอเกม CRT */
             background-image: 
                 linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
@@ -303,8 +310,16 @@ try {
 <div class="container">
     <div class="filter-section">
         <form method="GET" action="games.php" style="display: flex; gap: 10px; flex: 1; flex-wrap: wrap; align-items: center;">
-            <input type="text" name="search" placeholder="ค้นหาชื่อเกม หรือผู้พัฒนา..." value="<?= htmlspecialchars($search) ?>" style="flex: 2; min-width: 200px;">
+            <!-- ช่องค้นหาผูกกับ datalist id="game-list" สำหรับ Auto-suggest -->
+            <input type="text" name="search" list="game-list" autocomplete="off" placeholder="ค้นหาชื่อเกม หรือผู้พัฒนา..." value="<?= htmlspecialchars($search) ?>" style="flex: 2; min-width: 200px;">
             
+            <!-- รายการตัวเลือกแนะนำอัตโนมัติ -->
+            <datalist id="game-list">
+                <?php foreach ($all_game_titles as $g_title): ?>
+                    <option value="<?= htmlspecialchars($g_title) ?>"></option>
+                <?php endforeach; ?>
+            </datalist>
+
             <select name="category" style="flex: 1; min-width: 170px;">
                 <option value="">🕹️ ทุกหมวดหมู่</option>
                 <?php foreach ($categories as $cat): ?>

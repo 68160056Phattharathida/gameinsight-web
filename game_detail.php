@@ -18,7 +18,7 @@ $game = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$game) {
     http_response_code(404);
-    die("ไม่พบข้อมูลเกมนี้ในระบบ");
+    die("ไม่พบข้อมูลเกมนี้ในระบบ ViewG");
 }
 
 // ดึงรีวิวพร้อมชื่อผู้ใช้
@@ -32,7 +32,7 @@ $review_stmt = $pdo->prepare("
 $review_stmt->execute([$game_id]);
 $reviews = $review_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// ดึงความคิดเห็นของรีวิวแต่ละรายการ
+// ดึงความคิดเห็นทั้งหมดของรีวิว (ทั้งข้อความหลักและตอบกลับ)
 $comment_stmt = $pdo->prepare("
     SELECT c.*, u.username
     FROM gi_comments c
@@ -46,306 +46,393 @@ $comment_stmt = $pdo->prepare("
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameInsight - <?= htmlspecialchars($game['title']) ?></title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <title>ViewG - <?= htmlspecialchars($game['title']) ?> [8-BIT ARCADE]</title>
+    <!-- Pixel Font สำหรับหัวข้อ/ปุ่ม และ Prompt สำหรับภาษาไทย -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Prompt', sans-serif;
+        :root {
+            --bg-dark: #0a0c13;
+            --panel-bg: #131722;
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-green: #00ff66;
+            --neon-yellow: #ffe600;
+            --text-main: #f1f5f9;
         }
+
+        * { box-sizing: border-box; image-rendering: pixelated; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-main);
+            font-family: 'Prompt', sans-serif;
+            min-height: 100vh;
+        }
+
+        .pixel-text { font-family: 'Press Start 2P', monospace; }
+
+        /* Navbar Header */
+        nav {
+            background: var(--panel-bg);
+            border-bottom: 4px solid var(--neon-cyan);
+            box-shadow: 0 4px 0px #000;
+            padding: 16px 24px;
+        }
+
+        .nav-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            color: var(--neon-cyan);
+            text-decoration: none;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .nav-links { display: flex; align-items: center; gap: 14px; }
+        .nav-links a { color: #94a3b8; text-decoration: none; font-size: 14px; }
+        .nav-links a:hover { color: var(--neon-cyan); }
+
+        /* Pixel Buttons */
+        .pixel-btn {
+            display: inline-block;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            padding: 8px 12px;
+            color: #000;
+            background-color: var(--neon-green);
+            border: 2px solid #fff;
+            box-shadow: 3px 3px 0px #000;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.08s, box-shadow 0.08s;
+        }
+
+        .pixel-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+            background-color: var(--neon-yellow);
+        }
+
+        .pixel-btn-pink { background-color: var(--neon-pink); color: #fff; }
+        .pixel-btn-pink:hover { background-color: #ff3344; color: #fff; }
+
+        /* Main Container & Pixel Panels */
+        main { max-width: 900px; margin: 30px auto; padding: 0 16px; }
+
+        .pixel-card {
+            background: var(--panel-bg);
+            border: 3px solid #fff;
+            box-shadow: 6px 6px 0px #000;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* Hero Info */
+        .game-hero {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .game-hero { flex-direction: row; }
+        }
+
+        .game-cover {
+            width: 100%;
+            max-width: 280px;
+            height: 180px;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 4px 4px 0px #000;
+        }
+
+        .category-tag {
+            background: #000;
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            padding: 3px 8px;
+            font-size: 9px;
+            font-family: 'Press Start 2P', monospace;
+            display: inline-block;
+        }
+
+        /* Pros / Cons */
+        .grid-pros-cons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin: 16px 0;
+        }
+        @media (min-width: 640px) {
+            .grid-pros-cons { grid-template-columns: 1fr 1fr; }
+        }
+
+        .box-pros {
+            background: #062312;
+            border: 2px solid var(--neon-green);
+            box-shadow: 4px 4px 0px #000;
+            padding: 14px;
+        }
+
+        .box-cons {
+            background: #2b0813;
+            border: 2px solid var(--neon-pink);
+            box-shadow: 4px 4px 0px #000;
+            padding: 14px;
+        }
+
+        /* Comments Layout */
+        .comment-item {
+            background: #0b0e17;
+            border: 2px solid #334155;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .comment-reply {
+            margin-left: 28px;
+            border-left: 3px solid var(--neon-cyan);
+            background: #111524;
+            padding: 10px 14px;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            background: #080a0f;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 10px;
+            font-family: 'Prompt', sans-serif;
+            outline: none;
+            resize: vertical;
+        }
+        textarea:focus { border-color: var(--neon-cyan); }
     </style>
 </head>
-
-<body class="bg-pink-50 text-gray-800 min-h-screen">
+<body>
 
     <!-- Navbar -->
-    <nav class="bg-white shadow-sm border-b border-pink-100">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="games.php" class="text-2xl font-bold text-pink-600">
-                🎮 GameInsight
-            </a>
-
-            <div class="space-x-4 flex items-center">
-                <a href="games.php" class="text-gray-600 hover:text-pink-600">
-                    หน้าแรก
-                </a>
-
+    <nav>
+        <div class="nav-container">
+            <a href="games.php" class="logo pixel-text">🎮 ViewG</a>
+            <div class="nav-links">
+                <a href="games.php">หน้ารายการเกม</a>
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <span class="text-gray-700 font-medium">
-                        👤 <?= htmlspecialchars($_SESSION['username'] ?? 'ผู้ใช้') ?>
-                    </span>
-
-                    <!-- ส่วนแยกสิทธิ์สำหรับ Admin -->
+                    <span style="color: var(--neon-cyan);">👤 <?= htmlspecialchars($_SESSION['username'] ?? 'ผู้ใช้') ?></span>
                     <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
-                        <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded font-bold">แอดมิน</span>
-                        <a href="admin_dashboard.php" class="text-amber-600 hover:text-amber-700 font-medium text-sm">
-                            ⚙️ จัดการหลังบ้าน
-                        </a>
+                        <span class="pixel-text" style="background: var(--neon-pink); color: #fff; padding: 2px 6px; font-size: 8px;">ADMIN</span>
+                        <a href="admin_dashboard.php" style="color: var(--neon-yellow); font-size: 13px;">จัดการหลังบ้าน</a>
                     <?php endif; ?>
-
-                    <a href="logout.php" class="text-red-500 hover:text-red-600 text-sm">
-                        ออกจากระบบ
-                    </a>
+                    <a href="logout.php" class="pixel-btn pixel-btn-pink" style="padding: 4px 8px;">ออก</a>
                 <?php else: ?>
-                    <a href="login.php"
-                       class="bg-pink-500 text-white px-4 py-2 rounded-full shadow hover:bg-pink-600">
-                        เข้าสู่ระบบ
-                    </a>
+                    <a href="login.php" class="pixel-btn">เข้าสู่ระบบ</a>
                 <?php endif; ?>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-4xl mx-auto px-4 py-8">
+    <main>
+        <!-- Game Hero Card -->
+        <div class="pixel-card game-hero">
+            <img src="<?= htmlspecialchars($game['cover_image'] ?: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80') ?>" 
+                 alt="Cover" class="game-cover">
+            <div style="flex: 1;">
+                <span class="category-tag"><?= htmlspecialchars($game['category_name'] ?? 'ETC') ?></span>
+                <h1 style="margin: 8px 0; font-size: 26px; color: #fff;"><?= htmlspecialchars($game['title']) ?></h1>
+                <p style="color: #94a3b8; font-size: 14px; margin: 0 0 16px 0;">Dev: <?= htmlspecialchars($game['developer'] ?? 'ไม่ระบุ') ?></p>
 
-        <!-- Game Information -->
-        <div class="bg-white rounded-2xl shadow-sm border border-pink-100 p-6 mb-8 flex flex-col md:flex-row gap-6">
-
-            <img
-                src="<?= htmlspecialchars(
-                    $game['cover_image']
-                    ?: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80'
-                ) ?>"
-                alt="Game Cover"
-                class="w-full md:w-1/3 rounded-xl object-cover h-56"
-            >
-
-            <div class="flex-1">
-                <span class="bg-pink-100 text-pink-700 text-xs px-3 py-1 rounded-full font-medium">
-                    <?= htmlspecialchars($game['category_name'] ?? 'ไม่ระบุหมวดหมู่') ?>
-                </span>
-
-                <h1 class="text-3xl font-bold text-gray-900 mt-2">
-                    <?= htmlspecialchars($game['title']) ?>
-                </h1>
-
-                <p class="text-gray-500 text-sm mt-1">
-                    พัฒนาโดย: <?= htmlspecialchars($game['developer'] ?? 'ไม่ระบุ') ?>
-                </p>
-
-                <div class="mt-4">
-                    <?php if (!empty($game['store_url'])): ?>
-                        <a
-                            href="<?= htmlspecialchars($game['store_url']) ?>"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="bg-gray-900 text-white text-xs px-4 py-2 rounded-xl hover:bg-gray-800 font-medium inline-block"
-                        >
-                            หน้าร้านค้าทางการ →
-                        </a>
-                    <?php endif; ?>
-                </div>
+                <?php if (!empty($game['store_url'])): ?>
+                    <a href="<?= htmlspecialchars($game['store_url']) ?>" target="_blank" class="pixel-btn" style="background: var(--neon-cyan);">
+                        STORE PAGE ↗
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
 
         <!-- Review Header -->
-        <div class="flex justify-between items-center mb-6 gap-4">
-            <h2 class="text-xl font-bold text-gray-900">
-                รีวิวจากผู้เล่น (<?= count($reviews) ?>)
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 class="pixel-text" style="font-size: 14px; color: var(--neon-cyan); margin: 0;">
+                REVIEWS (<?= count($reviews) ?>)
             </h2>
-
             <?php if (isset($_SESSION['user_id'])): ?>
-                <a
-                    href="add_review.php?game_id=<?= $game_id ?>"
-                    class="bg-pink-500 text-white text-sm px-4 py-2 rounded-xl shadow hover:bg-pink-600 font-medium"
-                >
+                <a href="add_review.php?game_id=<?= $game_id ?>" class="pixel-btn" style="background: var(--neon-yellow);">
                     ✍️ เขียนรีวิวเกมนี้
                 </a>
             <?php endif; ?>
         </div>
 
         <?php if (empty($reviews)): ?>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-pink-100 p-8 text-center text-gray-400 mb-8">
-                <p>ยังไม่มีบทวิจารณ์สำหรับเกมนี้ในระบบ</p>
-                <p class="text-xs mt-1">
-                    มาเป็นคนแรกที่แชร์ประสบการณ์การเล่นเกมนี้กันเถอะ!
-                </p>
+            <div class="pixel-card" style="text-align: center; border-style: dashed;">
+                <p class="pixel-text" style="color: var(--neon-pink); font-size: 11px;">[ NO REVIEWS YET ]</p>
+                <p style="color: #94a3b8; font-size: 14px;">มาร่วมเป็นคนแรกที่รีวิวเกมนี้ใน ViewG กันเถอะ!</p>
             </div>
-
         <?php else: ?>
-
             <?php foreach ($reviews as $review): ?>
-
-                <!-- Review Card -->
-                <div class="bg-white rounded-2xl shadow-sm border border-pink-100 p-6 mb-6">
-
-                    <div class="flex justify-between items-center border-b border-gray-100 pb-4 mb-4 gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-pink-200 rounded-full flex items-center justify-center font-bold text-pink-700">
-                                <?= htmlspecialchars(mb_substr($review['username'], 0, 1)) ?>
-                            </div>
-
-                            <div>
-                                <h3 class="font-semibold text-gray-900">
-                                    <?= htmlspecialchars($review['username']) ?>
-                                </h3>
-
-                                <p class="text-xs text-gray-400">
-                                    รีวิวเมื่อ: <?= htmlspecialchars($review['created_at']) ?>
-                                </p>
-                            </div>
+                <div class="pixel-card">
+                    <!-- Review Top Bar -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #334155; padding-bottom: 12px; margin-bottom: 14px;">
+                        <div>
+                            <strong style="color: var(--neon-cyan); font-size: 16px;"><?= htmlspecialchars($review['username']) ?></strong>
+                            <div style="font-size: 11px; color: #64748b;"><?= htmlspecialchars($review['created_at']) ?></div>
                         </div>
-
-                        <div class="flex items-center gap-3">
-                            <div class="bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full font-bold text-lg flex items-center gap-1">
-                                ⭐ <?= number_format((float) $review['rating'], 1) ?> / 5.0
-                            </div>
-
-                            <!-- 📌 โค้ดที่วางเพิ่ม (เฉพาะเจ้าของรีวิว หรือ Admin) -->
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="pixel-text" style="color: var(--neon-yellow); font-size: 11px;">
+                                ★ <?= number_format((float) $review['rating'], 1) ?>/5.0
+                            </span>
                             <?php if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $review['user_id'] || ($_SESSION['role'] ?? '') === 'admin')): ?>
                                 <a href="delete_review.php?id=<?= $review['review_id'] ?>" 
-                                   onclick="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรีวิวนี้?');" 
-                                   class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1">
-                                   🗑️ ลบรีวิว
-                                </a>
+                                   onclick="return confirm('ยืนยันลบรีวิวนี้หรือไม่?');" 
+                                   class="pixel-btn pixel-btn-pink" style="padding: 4px 6px; font-size: 9px;">DEL</a>
                             <?php endif; ?>
                         </div>
                     </div>
 
-                    <!-- Review Title and Content -->
-                    <div class="mb-6">
-                        <h4 class="font-semibold text-gray-800 mb-2">
-                            <?= htmlspecialchars($review['title']) ?>
-                        </h4>
+                    <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #fff;"><?= htmlspecialchars($review['title']) ?></h3>
 
-                        <?php if (!empty($review['review_image'])): ?>
-                            <img
-                                src="<?= htmlspecialchars($review['review_image']) ?>"
-                                alt="รูปประกอบรีวิว"
-                                class="max-h-80 rounded-xl object-contain mb-4"
-                            >
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Pros and Cons -->
-                    <div class="grid md:grid-cols-2 gap-4 mb-6">
-
-                        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
-                            <h5 class="font-semibold text-emerald-800 mb-2">
-                                ✅ ข้อดี (Pros)
-                            </h5>
-
-                            <p class="text-sm text-emerald-700 whitespace-pre-line"><?= htmlspecialchars($review['content_pros'] ?? '') ?></p>
-                        </div>
-
-                        <div class="bg-rose-50 border border-rose-100 rounded-xl p-4">
-                            <h5 class="font-semibold text-rose-800 mb-2">
-                                ❌ ข้อเสีย (Cons)
-                            </h5>
-
-                            <p class="text-sm text-rose-700 whitespace-pre-line"><?= htmlspecialchars($review['content_cons'] ?? '') ?></p>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Comments / Q&A -->
-                <div class="bg-white rounded-2xl shadow-sm border border-pink-100 p-6 mb-8">
-
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">
-                        💬 สอบถามข้อมูลเชิงลึก / ความคิดเห็น
-                    </h3>
-
-                    <!-- Comment Form -->
-                    <?php if (isset($_SESSION['user_id'])): ?>
-
-                        <form action="submit_comment.php" method="POST" class="mb-6">
-                            <input
-                                type="hidden"
-                                name="review_id"
-                                value="<?= (int) $review['review_id'] ?>"
-                            >
-
-                            <textarea
-                                name="comment"
-                                rows="3"
-                                required
-                                placeholder="สอบถามผู้รีวิว เช่น เกมนี้เล่นบนจอยสติ๊กสะดวกไหม หรือมีภาษาไทยไหม..."
-                                class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-pink-500"
-                            ></textarea>
-
-                            <div class="flex justify-end mt-2">
-                                <button
-                                    type="submit"
-                                    class="bg-pink-500 text-white text-sm px-5 py-2 rounded-xl shadow hover:bg-pink-600 font-medium cursor-pointer"
-                                >
-                                    ส่งคำถาม
-                                </button>
-                            </div>
-                        </form>
-
-                    <?php else: ?>
-
-                        <p class="text-sm text-gray-500 mb-6">
-                            <a href="login.php" class="text-pink-600 font-semibold hover:underline">
-                                เข้าสู่ระบบ
-                            </a>
-                            เพื่อส่งคำถามหรือแสดงความคิดเห็น
-                        </p>
-
+                    <?php if (!empty($review['review_image'])): ?>
+                        <img src="<?= htmlspecialchars($review['review_image']) ?>" alt="Review Image" 
+                             style="max-width: 100%; max-height: 320px; object-fit: contain; border: 2px solid #fff; margin-bottom: 14px;">
                     <?php endif; ?>
 
-                    <!-- Comment List -->
-                    <div class="space-y-4 border-t border-gray-100 pt-4">
+                    <!-- Pros / Cons -->
+                    <div class="grid-pros-cons">
+                        <div class="box-pros">
+                            <h5 style="margin: 0 0 6px 0; color: var(--neon-green); font-size: 13px;">✅ ข้อดี (PROS)</h5>
+                            <p style="margin: 0; font-size: 13px; color: #a7f3d0; whitespace-pre-line;"><?= htmlspecialchars($review['content_pros'] ?? '-') ?></p>
+                        </div>
+                        <div class="box-cons">
+                            <h5 style="margin: 0 0 6px 0; color: var(--neon-pink); font-size: 13px;">❌ ข้อเสีย (CONS)</h5>
+                            <p style="margin: 0; font-size: 13px; color: #fecdd3; whitespace-pre-line;"><?= htmlspecialchars($review['content_cons'] ?? '-') ?></p>
+                        </div>
+                    </div>
 
+                    <!-- Q&A Discussions -->
+                    <div style="margin-top: 24px; border-top: 2px solid #334155; padding-top: 16px;">
+                        <h4 class="pixel-text" style="font-size: 11px; color: var(--neon-cyan); margin: 0 0 14px 0;">
+                            💬 Q&A DISCUSSIONS
+                        </h4>
+
+                        <!-- ฟอร์มตั้งคำถามใหม่ (parent_id ว่าง) -->
+                        <?php if (isset($_SESSION['user_id'])): ?>
+                            <form action="submit_comment.php" method="POST" style="margin-bottom: 16px;">
+                                <input type="hidden" name="review_id" value="<?= (int) $review['review_id'] ?>">
+                                <input type="hidden" name="game_id" value="<?= (int) $game_id ?>">
+                                <input type="hidden" name="parent_id" value="">
+                                <textarea name="comment" rows="2" required placeholder="สอบถามผู้รีวิวเกี่ยวกับเกมนี้..."></textarea>
+                                <div style="text-align: right; margin-top: 6px;">
+                                    <button type="submit" class="pixel-btn">SEND COMMENT</button>
+                                </div>
+                            </form>
+                        <?php else: ?>
+                            <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">
+                                <a href="login.php" style="color: var(--neon-cyan);">เข้าสู่ระบบ</a> เพื่อส่งคำถามหรือแสดงความคิดเห็น
+                            </p>
+                        <?php endif; ?>
+
+                        <!-- จัดกลุ่มและแยกแสดงผล: คอมเมนต์หลัก vs คอมเมนต์ตอบกลับ -->
                         <?php
                         $comment_stmt->execute([(int) $review['review_id']]);
-                        $comments = $comment_stmt->fetchAll(PDO::FETCH_ASSOC);
+                        $all_comments = $comment_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                        $parent_comments = [];
+                        $replies = [];
+                        foreach ($all_comments as $c) {
+                            if (!empty($c['parent_id'])) {
+                                $replies[$c['parent_id']][] = $c;
+                            } else {
+                                $parent_comments[] = $c;
+                            }
+                        }
                         ?>
 
-                        <?php if (empty($comments)): ?>
-
-                            <p class="text-xs text-gray-400 text-center py-2">
-                                ยังไม่มีคำถามหรือความคิดเห็นใต้รีวิวนี้
-                            </p>
-
+                        <?php if (empty($parent_comments)): ?>
+                            <p style="font-size: 12px; color: #64748b; text-align: center;">ยังไม่มีคำถามหรือความคิดเห็นใต้รีวิวนี้</p>
                         <?php else: ?>
+                            <?php foreach ($parent_comments as $comm): ?>
+                                <div class="comment-item">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <strong style="color: #fff; font-size: 13px;"><?= htmlspecialchars($comm['username']) ?></strong>
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <span style="font-size: 10px; color: #64748b;"><?= htmlspecialchars($comm['created_at']) ?></span>
+                                            
+                                            <!-- ปุ่ม Reply เปิดฟอร์มพิมพ์ตอบกลับ -->
+                                            <?php if (isset($_SESSION['user_id'])): ?>
+                                                <button type="button" class="pixel-btn" style="padding: 2px 6px; font-size: 8px;"
+                                                        onclick="document.getElementById('reply-form-<?= $comm['comment_id'] ?>').style.display = 'block';">
+                                                    REPLY
+                                                </button>
+                                            <?php endif; ?>
 
-                            <?php foreach ($comments as $comm): ?>
-                                <div class="bg-pink-50/50 rounded-xl p-4">
-                                    <div class="flex justify-between items-center mb-1 gap-4">
-                                        <span class="font-semibold text-sm text-gray-900">
-                                            <?= htmlspecialchars($comm['username']) ?>
-                                        </span>
-                            
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-xs text-gray-400">
-                                                <?= htmlspecialchars($comm['created_at']) ?>
-                                            </span>
-                            
-                                            <!-- 📌 ปุ่มลบคอมเมนต์ (แสดงเฉพาะเจ้าของคอมเมนต์ หรือ Admin) -->
+                                            <!-- ปุ่มลบคอมเมนต์ -->
                                             <?php if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $comm['user_id'] || ($_SESSION['role'] ?? '') === 'admin')): ?>
                                                 <a href="delete_comment.php?id=<?= $comm['comment_id'] ?>&game_id=<?= $game_id ?>" 
-                                                   onclick="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบคอมเมนต์นี้?');" 
-                                                   class="text-xs text-red-500 hover:text-red-700 font-medium ml-2">
-                                                   🗑️ ลบ
-                                                </a>
+                                                   onclick="return confirm('ยืนยันลบคอมเมนต์?');" 
+                                                   style="color: var(--neon-pink); font-size: 11px; text-decoration: none;">ลบ</a>
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                            
-                                    <p class="text-sm text-gray-600 whitespace-pre-line"><?= htmlspecialchars($comm['comment_text']) ?></p>
+                                    <p style="margin: 0; font-size: 13px; color: #cbd5e1; whitespace-pre-line;"><?= htmlspecialchars($comm['comment_text']) ?></p>
+
+                                    <!-- ฟอร์มสำหรับพิมพ์ตอบกลับ (ซ่อนอยู่จนกว่าจะกดปุ่ม REPLY) -->
+                                    <?php if (isset($_SESSION['user_id'])): ?>
+                                        <form id="reply-form-<?= $comm['comment_id'] ?>" action="submit_comment.php" method="POST" style="display: none; margin-top: 10px;">
+                                            <input type="hidden" name="review_id" value="<?= (int) $review['review_id'] ?>">
+                                            <input type="hidden" name="game_id" value="<?= (int) $game_id ?>">
+                                            <input type="hidden" name="parent_id" value="<?= (int) $comm['comment_id'] ?>">
+                                            <textarea name="comment" rows="2" required placeholder="ตอบกลับคุณ <?= htmlspecialchars($comm['username']) ?>..."></textarea>
+                                            <div style="text-align: right; margin-top: 4px; display: flex; justify-content: flex-end; gap: 6px;">
+                                                <button type="button" class="pixel-btn" style="background: #334155; color: #fff;" onclick="this.parentElement.parentElement.style.display = 'none';">CANCEL</button>
+                                                <button type="submit" class="pixel-btn">SEND REPLY</button>
+                                            </div>
+                                        </form>
+                                    <?php endif; ?>
+
+                                    <!-- แสดงรายการคำตอบกลับย่อย (Replies) -->
+                                    <?php if (!empty($replies[$comm['comment_id']])): ?>
+                                        <?php foreach ($replies[$comm['comment_id']] as $rep): ?>
+                                            <div class="comment-reply">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                                    <span style="color: var(--neon-cyan); font-size: 12px; font-weight: 600;">↳ <?= htmlspecialchars($rep['username']) ?></span>
+                                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                                        <span style="font-size: 9px; color: #64748b;"><?= htmlspecialchars($rep['created_at']) ?></span>
+                                                        <?php if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $rep['user_id'] || ($_SESSION['role'] ?? '') === 'admin')): ?>
+                                                            <a href="delete_comment.php?id=<?= $rep['comment_id'] ?>&game_id=<?= $game_id ?>" 
+                                                               onclick="return confirm('ยืนยันลบคอมเมนต์ตอบกลับ?');" 
+                                                               style="color: var(--neon-pink); font-size: 10px; text-decoration: none;">ลบ</a>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                                <p style="margin: 0; font-size: 12px; color: #e2e8f0; whitespace-pre-line;"><?= htmlspecialchars($rep['comment_text']) ?></p>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+
                                 </div>
                             <?php endforeach; ?>
-
                         <?php endif; ?>
-
                     </div>
                 </div>
-
             <?php endforeach; ?>
-
         <?php endif; ?>
-
     </main>
 
-    <!-- Footer -->
-    <footer class="text-center py-6 text-gray-400 text-xs">
-        &copy; 2026 GameInsight. All rights reserved.
+    <footer style="text-align: center; padding: 24px; color: #64748b; font-size: 11px;" class="pixel-text">
+        &copy; 2026 ViewG. All rights reserved.
     </footer>
 
 </body>

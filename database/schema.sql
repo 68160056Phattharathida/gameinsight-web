@@ -51,11 +51,11 @@ CREATE TABLE IF NOT EXISTS gi_reviews (
 CREATE TABLE IF NOT EXISTS gi_comments (
     comment_id INT AUTO_INCREMENT PRIMARY KEY,
     review_id INT NOT NULL,
+    parent_id INT NULL DEFAULT NULL,
     user_id INT NOT NULL,
     comment_text TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_gi_comments_review FOREIGN KEY (review_id) 
-        REFERENCES gi_reviews(review_id) ON DELETE CASCADE,
-    CONSTRAINT fk_gi_comments_user FOREIGN KEY (user_id) 
-        REFERENCES gi_users(user_id) ON DELETE CASCADE
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (review_id) REFERENCES gi_reviews(review_id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES gi_comments(comment_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES gi_users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

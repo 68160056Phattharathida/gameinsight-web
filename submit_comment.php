@@ -12,12 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $review_id = isset($_POST['review_id']) ? (int)$_POST['review_id'] : 0;
     $comment_text = trim($_POST['comment'] ?? '');
     $user_id = $_SESSION['user_id'];
+    
+    // รับค่า parent_id สำหรับการตอบกลับ (ถ้าไม่มีค่าหรือเป็นค่าว่าง ให้บันทึกเป็น NULL)
+    $parent_id = !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null;
 
     if (!empty($comment_text) && $review_id > 0) {
         try {
-            // บันทึกคอมเมนต์ลงตาราง gi_comments
-            $stmt = $pdo->prepare("INSERT INTO gi_comments (review_id, user_id, comment_text, created_at) VALUES (?, ?, ?, NOW())");
-            $stmt->execute([$review_id, $user_id, $comment_text]);
+            // บันทึกคอมเมนต์ลงตาราง gi_comments โดยเพิ่มฟิลด์ parent_id
+            $stmt = $pdo->prepare("
+                INSERT INTO gi_comments (review_id, parent_id, user_id, comment_text, created_at) 
+                VALUES (?, ?, ?, ?, NOW())
+            ");
+            $stmt->execute([$review_id, $parent_id, $user_id, $comment_text]);
 
             // ดึง game_id เพื่อส่งกลับไปยังหน้ารายละเอียดเกมเดิม
             $g_stmt = $pdo->prepare("SELECT game_id FROM gi_reviews WHERE review_id = ?");
