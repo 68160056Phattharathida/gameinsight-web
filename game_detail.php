@@ -128,6 +128,9 @@ $comment_stmt = $pdo->prepare("
         .pixel-btn-pink { background-color: var(--neon-pink); color: #fff; }
         .pixel-btn-pink:hover { background-color: #ff3344; color: #fff; }
 
+        .pixel-btn-yellow { background-color: var(--neon-yellow); color: #000; }
+        .pixel-btn-yellow:hover { background-color: #ffd700; color: #000; }
+
         /* Main Container & Pixel Panels */
         main { max-width: 900px; margin: 30px auto; padding: 0 16px; }
 
@@ -294,6 +297,17 @@ $comment_stmt = $pdo->prepare("
                             <span class="pixel-text" style="color: var(--neon-yellow); font-size: 11px;">
                                 ★ <?= number_format((float) $review['rating'], 1) ?>/5.0
                             </span>
+
+                            <!-- ปุ่มรายงานรีวิว (แสดงเฉพาะเมื่อเข้าสู่ระบบแล้ว) -->
+                            <?php if (isset($_SESSION['user_id'])): ?>
+                                <a href="report_review.php?review_id=<?= $review['review_id'] ?>" 
+                                   class="pixel-btn pixel-btn-yellow" style="padding: 4px 6px; font-size: 9px;"
+                                   onclick="return confirm('ต้องการรายงานรีวิวนี้ว่าไม่เหมาะสมใช่หรือไม่?');">
+                                    🚨 REPORT
+                                </a>
+                            <?php endif; ?>
+
+                            <!-- ปุ่มลบรีวิว (สำหรับเจ้าของโพสต์หรือ Admin) -->
                             <?php if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $review['user_id'] || ($_SESSION['role'] ?? '') === 'admin')): ?>
                                 <a href="delete_review.php?id=<?= $review['review_id'] ?>" 
                                    onclick="return confirm('ยืนยันลบรีวิวนี้หรือไม่?');" 
