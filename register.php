@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "คุณต้องยอมรับข้อกำหนดการให้บริการก่อนสมัครสมาชิก";
     }
 
-    // 3. บันทึกลงฐานข้อมูล (ใช้ตาราง users ตาม Schema ใหม่)
+    // 3. บันทึกลงฐานข้อมูล
     if (empty($errors)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
@@ -119,12 +119,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cursor: not-allowed !important;
             box-shadow: none !important;
         }
-
-        .cyber-modal {
-            background-color: #12141d;
-            border: 2px solid #00f2fe;
-            box-shadow: 0 0 25px rgba(0, 242, 254, 0.4);
-        }
     </style>
 </head>
 <body class="text-gray-100 min-h-screen flex flex-col justify-between">
@@ -196,11 +190,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                class="w-full text-sm p-3 rounded cyber-input" placeholder="กรอกรหัสผ่านซ้ำอีกครั้ง">
                     </div>
 
+                    <!-- ลิงก์ตรงไปที่ terms.php ในแท็บใหม่ -->
                     <div class="flex items-start gap-2 pt-1">
                         <input type="checkbox" id="agreed_terms" name="agreed_terms" value="1" required class="mt-1 accent-cyan-400 cursor-pointer">
-                        <label for="agreed_terms" class="text-xs text-gray-400 leading-relaxed">
+                        <label for="agreed_terms" class="text-xs text-gray-400 leading-relaxed cursor-pointer">
                             ฉันยอมรับ 
-                            <a href="#" id="openModal" class="text-cyan-400 underline hover:text-cyan-300 font-medium">
+                            <a href="terms.php" class="text-cyan-400 underline hover:text-cyan-300 font-medium">
                                 ข้อกำหนดการให้บริการและนโยบายความเป็นส่วนตัว
                             </a>
                         </label>
@@ -225,49 +220,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </main>
 
-    <!-- Modal ข้อกำหนด -->
-    <div id="tosModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
-        <div class="cyber-modal rounded-xl p-6 max-w-lg w-full max-h-[75vh] overflow-y-auto relative text-gray-300">
-            <span class="close-btn text-gray-400 hover:text-cyan-400 float-right text-2xl font-bold cursor-pointer" id="closeModal">&times;</span>
-            <h3 class="text-lg font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2">📜 ข้อกำหนดการให้บริการ (Terms of Service)</h3>
-            <div class="space-y-3 text-xs leading-relaxed">
-                <p>1. ผู้ใช้ต้องกรอกข้อมูลที่เป็นความจริงในการสมัครสมาชิก</p>
-                <p>2. ห้ามใช้ระบบนี้ในการส่งข้อมูลที่เป็นเท็จหรือละเมิดกฎหมาย</p>
-                <p>3. ระบบจะทำการเก็บรักษาข้อมูลของคุณอย่างปลอดภัยตามนโยบายความเป็นส่วนตัว</p>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
     <footer class="text-center py-4 text-xs text-gray-500 border-t border-gray-900">
         &copy; 2026 ViewG. All rights reserved.
     </footer>
 
 <script>
-    // Modal Script
-    const modal = document.getElementById('tosModal');
-    const openBtn = document.getElementById('openModal');
-    const closeBtn = document.getElementById('closeModal');
-
-    if (openBtn && modal) {
-        openBtn.onclick = (e) => {
-            e.preventDefault();
-            modal.style.display = 'flex';
-        };
-    }
-
-    if (closeBtn && modal) {
-        closeBtn.onclick = () => {
-            modal.style.display = 'none';
-        };
-    }
-
-    window.onclick = (e) => {
-        if (modal && e.target === modal) {
-            modal.style.display = 'none';
-        }
-    };
-
     // Form Validation Script
     const form = document.querySelector('.cyber-card form');
     const registerBtn = document.getElementById('registerBtn');
