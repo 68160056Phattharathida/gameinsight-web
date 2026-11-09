@@ -59,3 +59,15 @@ CREATE TABLE IF NOT EXISTS gi_comments (
     FOREIGN KEY (parent_id) REFERENCES gi_comments(comment_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES gi_users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. ตาราง Reports (ระบบรายงานความไม่เหมาะสม)
+CREATE TABLE IF NOT EXISTS gi_reports (
+    report_id INT AUTO_INCREMENT PRIMARY KEY,
+    target_type VARCHAR(50) NOT NULL,
+    target_id INT NOT NULL,
+    user_id INT NOT NULL,
+    reason TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES gi_users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

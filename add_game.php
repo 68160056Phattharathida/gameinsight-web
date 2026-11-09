@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/db.php';
+require_once __DIR__ . '/config/db.php';
 
 // ตรวจสอบการเข้าสู่ระบบ
 if (!isset($_SESSION['user_id'])) {
@@ -26,41 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category_id = $_POST['category_id'] ?? '';
     $new_category = trim($_POST['new_category'] ?? '');
 
+    $cover_image = trim($_POST['cover_url'] ?? '');
+
     $review_title = trim($_POST['review_title'] ?? '');
     $rating = (float)($_POST['rating'] ?? 5.0);
     $content_pros = trim($_POST['content_pros'] ?? '');
     $content_cons = trim($_POST['content_cons'] ?? '');
     $user_id = $_SESSION['user_id'];
-
-    // --- ส่วนการจัดการรูปภาพ (ไฟล์อัปโหลด หรือ URL) ---
-    $cover_image = '';
-
-    // 1. ตรวจสอบว่ามีการเลือกไฟล์จากเครื่องหรือไม่
-    if (isset($_FILES['cover_file']) && $_FILES['cover_file']['error'] === UPLOAD_ERR_OK) {
-        $fileTmpPath = $_FILES['cover_file']['tmp_name'];
-        $fileName = $_FILES['cover_file']['name'];
-        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-        if (in_array($fileExtension, $allowedExtensions)) {
-            $uploadFileDir = './uploads/';
-            if (!is_dir($uploadFileDir)) {
-                mkdir($uploadFileDir, 0755, true);
-            }
-
-            $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
-            $dest_path = $uploadFileDir . $newFileName;
-
-            if (move_uploaded_file($fileTmpPath, $dest_path)) {
-                $cover_image = $dest_path; // บันทึก Path ไฟล์ในเครื่อง
-            }
-        }
-    }
-
-    // 2. ถ้าไม่ได้แนบไฟล์ ให้ใช้ URL ที่กรอกไว้แทน (ถ้ามี)
-    if (empty($cover_image) && !empty($_POST['cover_url'])) {
-        $cover_image = trim($_POST['cover_url']);
-    }
 
     // Validation
     if (empty($title) || empty($review_title) || empty($content_pros) || empty($content_cons)) {
@@ -101,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $pdo->commit();
 
-            // บันทึกเสร็จแล้ว ส่งกลับไปหน้ารายการเกม
+            // ส่งกลับไปหน้ารายการเกม
             header("Location: games.php");
             exit();
 
@@ -117,108 +89,216 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เพิ่มเกมและโพสต์รีวิว - GameInsight</title>
+    <title>เพิ่มเกมและโพสต์รีวิว - ViewG [8-BIT ARCADE]</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 40px 15px; color: #1e293b; }
-        .card { background: white; max-width: 650px; margin: 0 auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
-        h3 { color: #0284c7; margin: 20px 0 10px 0; font-size: 1.1rem; }
-        .form-group { margin-bottom: 16px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95rem; }
-        input[type="text"], input[type="url"], input[type="file"], select, textarea {
-            width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; font-family: inherit;
+        :root {
+            --bg-dark: #0a0c13;
+            --panel-bg: #131722;
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-green: #00ff66;
+            --neon-yellow: #ffe600;
+            --text-main: #f1f5f9;
         }
-        textarea { resize: vertical; min-height: 80px; }
-        .btn-submit { width: 100%; padding: 14px; background-color: #10b981; color: white; border: none; border-radius: 6px; font-size: 1.05rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        .btn-submit:hover { background-color: #059669; }
-        .alert-error { background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 0.95rem; }
-        .back-link { display: inline-block; margin-top: 15px; color: #64748b; text-decoration: none; font-size: 0.9rem; }
-        .back-link:hover { text-decoration: underline; }
-        .or-divider { text-center; font-size: 0.8rem; color: #64748b; margin: 6px 0; font-weight: bold; }
+
+        * { box-sizing: border-box; image-rendering: pixelated; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-main);
+            font-family: 'Prompt', sans-serif;
+            min-height: 100vh;
+        }
+
+        .pixel-text { font-family: 'Press Start 2P', monospace; }
+
+        nav {
+            background: var(--panel-bg);
+            border-bottom: 4px solid var(--neon-cyan);
+            box-shadow: 0 4px 0px #000;
+            padding: 16px 24px;
+        }
+
+        .nav-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { font-size: 20px; color: var(--neon-cyan); text-decoration: none; text-shadow: 2px 2px 0px #000; }
+
+        .pixel-btn {
+            display: inline-block;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            padding: 8px 14px;
+            color: #000;
+            background-color: var(--neon-yellow);
+            border: 2px solid #fff;
+            box-shadow: 3px 3px 0px #000;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.08s, box-shadow 0.08s;
+        }
+
+        .pixel-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
+        .pixel-btn-cancel { background: #334155; color: #fff; }
+
+        main { max-width: 700px; margin: 40px auto; padding: 0 16px; }
+
+        .pixel-card {
+            background: var(--panel-bg);
+            border: 3px solid var(--neon-cyan);
+            box-shadow: 6px 6px 0px #000;
+            padding: 32px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            border-bottom: 2px dashed #334155;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            margin-top: 24px;
+            color: var(--neon-cyan);
+            font-size: 12px;
+        }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 11px; color: #94a3b8; }
+        
+        .form-control {
+            width: 100%;
+            padding: 11px;
+            background: #080a0f;
+            border: 2px solid #334155;
+            color: #fff;
+            font-family: 'Prompt', sans-serif;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-control:focus { border-color: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,240,255,0.2); }
+
+        textarea.form-control { resize: vertical; min-height: 80px; }
+
+        .alert-danger {
+            background: #2b0813;
+            border: 2px solid var(--neon-pink);
+            color: #fecdd3;
+            padding: 12px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 3px 3px 0px #000;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>🎮 เพิ่มเกมและโพสต์รีวิว</h2>
-
-    <?php if (!empty($error)): ?>
-        <div class="alert-error"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
-
-    <!-- เพิ่ม enctype="multipart/form-data" เพื่อให้รองรับไฟล์อัปโหลด -->
-    <form method="POST" action="" enctype="multipart/form-data">
-        <h3>1. ข้อมูลตัวเกม</h3>
-        <div class="form-group">
-            <label for="title">ชื่อเกม *</label>
-            <input type="text" id="title" name="title" placeholder="เช่น Black Myth: Wukong" required>
+    <nav>
+        <div class="nav-container">
+            <a href="games.php" class="logo pixel-text">🎮 ViewG</a>
+            <a href="games.php" class="pixel-btn pixel-btn-cancel">CANCEL</a>
         </div>
+    </nav>
 
-        <div class="form-group">
-            <label for="developer">ผู้พัฒนา</label>
-            <input type="text" id="developer" name="developer" placeholder="เช่น Game Science">
+    <main>
+        <div class="pixel-card">
+            <h2 class="pixel-text" style="font-size: 16px; color: var(--neon-yellow); margin-top: 0; text-align: center;">
+                🎮 เพิ่มเกมและโพสต์รีวิว
+            </h2>
+
+            <?php if (!empty($error)): ?>
+                <div class="alert-danger"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
+
+            <form method="POST" action="">
+                <div class="section-header pixel-text">1. ข้อมูลตัวเกม (GAME INFO)</div>
+
+                <div class="form-group">
+                    <label for="title" class="pixel-text">ชื่อเกม *</label>
+                    <input type="text" id="title" name="title" class="form-control" placeholder="เช่น Black Myth: Wukong" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="developer" class="pixel-text">ผู้พัฒนา</label>
+                    <input type="text" id="developer" name="developer" class="form-control" placeholder="เช่น Game Science">
+                </div>
+
+                <div class="form-group">
+                    <label for="category_id" class="pixel-text">เลือกหมวดหมู่เกม</label>
+                    <select id="category_id" name="category_id" class="form-control">
+                        <option value="">-- เลือกจากหมวดหมู่ที่มีอยู่ --</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= $cat['category_id'] ?>"><?= htmlspecialchars($cat['category_name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_category" class="pixel-text">หรือ เพิ่มหมวดหมู่ใหม่</label>
+                    <input type="text" id="new_category" name="new_category" class="form-control" placeholder="เช่น Soulslike, Simulator (ถ้าไม่มีในรายการด้านบน)">
+                </div>
+
+                <div class="form-group">
+                    <label for="cover_url" class="pixel-text">COVER IMAGE URL</label>
+                    <input type="url" id="cover_url" name="cover_url" class="form-control" placeholder="https://example.com/cover.jpg">
+                </div>
+
+                <div class="form-group">
+                    <label for="store_url" class="pixel-text">STORE URL (Steam / Epic Games)</label>
+                    <input type="url" id="store_url" name="store_url" class="form-control" placeholder="https://store.steampowered.com/app/...">
+                </div>
+
+                <div class="section-header pixel-text" style="color: var(--neon-green);">2. เนื้อหารีวิวของคุณ (REVIEW INFO)</div>
+
+                <div class="form-group">
+                    <label for="review_title" class="pixel-text">หัวข้อรีวิว *</label>
+                    <input type="text" id="review_title" name="review_title" class="form-control" placeholder="เช่น เกมแอ็กชันยอดเยี่ยมแห่งปี เล่นเพลินไม่มีเบื่อ" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="rating" class="pixel-text">คะแนนความประทับใจ *</label>
+                    <select id="rating" name="rating" class="form-control" required>
+                        <option value="5">★ 5.0 - ดีเยี่ยม</option>
+                        <option value="4">★ 4.0 - ดี</option>
+                        <option value="3">★ 3.0 - ปานกลาง</option>
+                        <option value="2">★ 2.0 - พอใช้</option>
+                        <option value="1">★ 1.0 - ต้องปรับปรุง</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="content_pros" class="pixel-text" style="color: var(--neon-green);">✅ ข้อดี (PROS) *</label>
+                    <textarea id="content_pros" name="content_pros" class="form-control" placeholder="ระบุสิ่งที่ประทับใจ จุดเด่นของเกม..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="content_cons" class="pixel-text" style="color: var(--neon-pink);">❌ ข้อเสีย (CONS) *</label>
+                    <textarea id="content_cons" name="content_cons" class="form-control" placeholder="ระบุสิ่งที่ไม่ชอบ หรือปัญหาที่พบ..." required></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 30px;">
+                    <a href="games.php" class="pixel-btn pixel-btn-cancel">CANCEL</a>
+                    <button type="submit" class="pixel-btn">POST GAME & REVIEW</button>
+                </div>
+            </form>
         </div>
-
-        <div class="form-group">
-            <label for="category_id">เลือกหมวดหมู่เกม</label>
-            <select id="category_id" name="category_id">
-                <option value="">-- เลือกจากหมวดหมู่ที่มีอยู่ --</option>
-                <?php foreach ($categories as $cat): ?>
-                    <option value="<?= $cat['category_id'] ?>"><?= htmlspecialchars($cat['category_name']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="new_category">หรือ เพิ่มหมวดหมู่ใหม่ (ถ้าไม่มีในรายการด้านบน)</label>
-            <input type="text" id="new_category" name="new_category" placeholder="เช่น Soulslike, Simulator">
-        </div>
-
-        <!-- ส่วนเลือกรูปภาพรูป 2 ระบบ -->
-        <div class="form-group">
-            <label>รูปหน้าปกเกม</label>
-            <input type="file" id="cover_file" name="cover_file" accept="image/*">
-            <div class="or-divider">- หรือวาง URL รูปภาพด้านล่าง -</div>
-            <input type="url" id="cover_url" name="cover_url" placeholder="https://example.com/cover.jpg">
-        </div>
-
-        <div class="form-group">
-            <label for="store_url">ลิงก์หน้าร้านค้าทางการ (Steam / Epic Games)</label>
-            <input type="url" id="store_url" name="store_url" placeholder="https://store.steampowered.com/app/...">
-        </div>
-
-        <h3>2. เนื้อหารีวิวของคุณ</h3>
-        <div class="form-group">
-            <label for="review_title">หัวข้อรีวิว *</label>
-            <input type="text" id="review_title" name="review_title" placeholder="เช่น เกมแอ็กชันยอดเยี่ยมแห่งปี เล่นเพลินไม่มีเบื่อ" required>
-        </div>
-
-        <div class="form-group">
-            <label for="rating">คะแนนความประทับใจ *</label>
-            <select id="rating" name="rating" required>
-                <option value="5">⭐⭐⭐⭐⭐ (5 ดาว - ยอดเยี่ยม)</option>
-                <option value="4">⭐⭐⭐⭐ (4 ดาว - ดีมาก)</option>
-                <option value="3">⭐⭐⭐ (3 ดาว - พอใช้)</option>
-                <option value="2">⭐⭐ (2 ดาว - ยังต้องปรับปรุง)</option>
-                <option value="1">⭐ (1 ดาว - ไม่แนะนำ)</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="content_pros">✅ ข้อดี (Pros) *</label>
-            <textarea id="content_pros" name="content_pros" placeholder="ระบุสิ่งที่ประทับใจ จุดเด่นของเกม..." required></textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="content_cons">❌ ข้อเสีย (Cons) *</label>
-            <textarea id="content_cons" name="content_cons" placeholder="ระบุสิ่งที่ไม่ชอบ หรือปัญหาที่พบ..." required></textarea>
-        </div>
-
-        <button type="submit" class="btn-submit">🚀 โพสต์เกมและรีวิวทันที</button>
-    </form>
-
-    <a href="games.php" class="back-link">← ยกเลิกและกลับไปหน้ารายการเกม</a>
-</div>
+    </main>
 
 </body>
 </html>

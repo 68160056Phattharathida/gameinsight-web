@@ -32,6 +32,14 @@ $review_stmt = $pdo->prepare("
 $review_stmt->execute([$game_id]);
 $reviews = $review_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// คำนวณคะแนนเฉลี่ยจากรายการรีวิวทั้งหมดของเกมนี้
+$total_review_count = count($reviews);
+$average_score = 0;
+if ($total_review_count > 0) {
+    $sum_rating = array_sum(array_column($reviews, 'rating'));
+    $average_score = $sum_rating / $total_review_count;
+}
+
 // ดึงความคิดเห็นทั้งหมดของรีวิว (ทั้งข้อความหลักและตอบกลับ)
 $comment_stmt = $pdo->prepare("
     SELECT c.*, u.username
@@ -125,8 +133,15 @@ $comment_stmt = $pdo->prepare("
             background-color: var(--neon-yellow);
         }
 
-        .pixel-btn-pink { background-color: var(--neon-pink); color: #fff; }
-        .pixel-btn-pink:hover { background-color: #ff3344; color: #fff; }
+        .pixel-btn-pink { 
+            background-color: var(--neon-pink) !important; 
+            color: #000000 !important; 
+            font-weight: bold;
+        }
+        .pixel-btn-pink:hover { 
+            background-color: var(--neon-yellow) !important; 
+            color: #000000 !important; 
+        }
 
         .pixel-btn-yellow { background-color: var(--neon-yellow); color: #000; }
         .pixel-btn-yellow:hover { background-color: #ffd700; color: #000; }
@@ -242,7 +257,7 @@ $comment_stmt = $pdo->prepare("
                     <?php endif; ?>
                     <a href="logout.php" class="pixel-btn pixel-btn-pink" style="padding: 4px 8px;">ออก</a>
                 <?php else: ?>
-                    <a href="login.php" class="pixel-btn">เข้าสู่ระบบ</a>
+                    <a href="login.php" class="pixel-btn pixel-btn-pink">เข้าสู่ระบบ</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -258,10 +273,27 @@ $comment_stmt = $pdo->prepare("
                 <span class="category-tag"><?= htmlspecialchars($game['category_name'] ?? 'ETC') ?></span>
                 <h1 style="margin: 8px 0; font-size: 26px; color: #fff;"><?= htmlspecialchars($game['title']) ?></h1>
                 <p style="color: #94a3b8; font-size: 14px; margin: 0 0 16px 0;">Dev: <?= htmlspecialchars($game['developer'] ?? 'ไม่ระบุ') ?></p>
+                
+                <div style="display: flex; align-items: center; gap: 10px; margin: 8px 0 12px 0;">
+                    <?php if ($total_review_count > 0): ?>
+                        <span class="pixel-text" style="background: #1e1b18; border: 2px solid var(--neon-yellow); color: var(--neon-yellow); padding: 4px 8px; font-size: 11px; box-shadow: 2px 2px 0px #000;">
+                            ★ <?= number_format($average_score, 1) ?> / 5.0
+                        </span>
+                        <span style="color: #94a3b8; font-size: 12px;">เฉลี่ยจาก <?= $total_review_count ?> รีวิวของผู้เล่น</span>
+                    <?php else: ?>
+                        <span style="color: #64748b; font-size: 12px;">ยังไม่มีคะแนนรีวิว</span>
+                    <?php endif; ?>
+                </div>
 
                 <?php if (!empty($game['store_url'])): ?>
                     <a href="<?= htmlspecialchars($game['store_url']) ?>" target="_blank" class="pixel-btn" style="background: var(--neon-cyan);">
                         STORE PAGE ↗
+                    </a>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <a href="edit_game.php?game_id=<?= $game['game_id'] ?>" class="pixel-btn pixel-btn-yellow" style="margin-left: 8px;">
+                        ✏️ EDIT GAME
                     </a>
                 <?php endif; ?>
             </div>
@@ -293,18 +325,24 @@ $comment_stmt = $pdo->prepare("
                             <strong style="color: var(--neon-cyan); font-size: 16px;"><?= htmlspecialchars($review['username']) ?></strong>
                             <div style="font-size: 11px; color: #64748b;"><?= htmlspecialchars($review['created_at']) ?></div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="pixel-text" style="color: var(--neon-yellow); font-size: 11px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="pixel-text" style="color: var(--neon-yellow); font-size: 11px; margin-right: 4px;">
                                 ★ <?= number_format((float) $review['rating'], 1) ?>/5.0
                             </span>
 
-                            <!-- ปุ่มรายงานรีวิว (แสดงเฉพาะเมื่อเข้าสู่ระบบแล้ว) -->
+                            <!-- ปุ่มรายงานรีวิว -->
                             <?php if (isset($_SESSION['user_id'])): ?>
                                 <a href="report_review.php?review_id=<?= $review['review_id'] ?>" 
                                    class="pixel-btn pixel-btn-yellow" style="padding: 4px 6px; font-size: 9px;"
                                    onclick="return confirm('ต้องการรายงานรีวิวนี้ว่าไม่เหมาะสมใช่หรือไม่?');">
                                     🚨 REPORT
                                 </a>
+                            <?php endif; ?>
+
+                            <!-- ปุ่มแก้ไขรีวิว (แสดงเฉพาะเมื่อเป็นเจ้าของรีวิว) -->
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $review['user_id'])): ?>
+                                <a href="edit_review.php?review_id=<?= $review['review_id'] ?>" 
+                                   class="pixel-btn pixel-btn-yellow" style="padding: 4px 6px; font-size: 9px;">✏️ EDIT</a>
                             <?php endif; ?>
 
                             <!-- ปุ่มลบรีวิว (สำหรับเจ้าของโพสต์หรือ Admin) -->
@@ -327,11 +365,11 @@ $comment_stmt = $pdo->prepare("
                     <div class="grid-pros-cons">
                         <div class="box-pros">
                             <h5 style="margin: 0 0 6px 0; color: var(--neon-green); font-size: 13px;">✅ ข้อดี (PROS)</h5>
-                            <p style="margin: 0; font-size: 13px; color: #a7f3d0; whitespace-pre-line;"><?= htmlspecialchars($review['content_pros'] ?? '-') ?></p>
+                            <p style="margin: 0; font-size: 13px; color: #a7f3d0; white-space: pre-line;"><?= htmlspecialchars($review['content_pros'] ?? '-') ?></p>
                         </div>
                         <div class="box-cons">
                             <h5 style="margin: 0 0 6px 0; color: var(--neon-pink); font-size: 13px;">❌ ข้อเสีย (CONS)</h5>
-                            <p style="margin: 0; font-size: 13px; color: #fecdd3; whitespace-pre-line;"><?= htmlspecialchars($review['content_cons'] ?? '-') ?></p>
+                            <p style="margin: 0; font-size: 13px; color: #fecdd3; white-space: pre-line;"><?= htmlspecialchars($review['content_cons'] ?? '-') ?></p>
                         </div>
                     </div>
 
@@ -354,7 +392,7 @@ $comment_stmt = $pdo->prepare("
                             </form>
                         <?php else: ?>
                             <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">
-                                <a href="login.php" style="color: var(--neon-cyan);">เข้าสู่ระบบ</a> เพื่อส่งคำถามหรือแสดงความคิดเห็น
+                                <a href="login.php" style="color: var(--neon-pink);">เข้าสู่ระบบ</a> เพื่อส่งคำถามหรือแสดงความคิดเห็น
                             </p>
                         <?php endif; ?>
 
@@ -400,7 +438,7 @@ $comment_stmt = $pdo->prepare("
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                    <p style="margin: 0; font-size: 13px; color: #cbd5e1; whitespace-pre-line;"><?= htmlspecialchars($comm['comment_text']) ?></p>
+                                    <p style="margin: 0; font-size: 13px; color: #cbd5e1; white-space: pre-line;"><?= htmlspecialchars($comm['comment_text']) ?></p>
 
                                     <!-- ฟอร์มสำหรับพิมพ์ตอบกลับ (ซ่อนอยู่จนกว่าจะกดปุ่ม REPLY) -->
                                     <?php if (isset($_SESSION['user_id'])): ?>
@@ -431,7 +469,7 @@ $comment_stmt = $pdo->prepare("
                                                         <?php endif; ?>
                                                     </div>
                                                 </div>
-                                                <p style="margin: 0; font-size: 12px; color: #e2e8f0; whitespace-pre-line;"><?= htmlspecialchars($rep['comment_text']) ?></p>
+                                                <p style="margin: 0; font-size: 12px; color: #e2e8f0; white-space: pre-line;"><?= htmlspecialchars($rep['comment_text']) ?></p>
                                             </div>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
