@@ -18,13 +18,14 @@ try {
     $all_game_titles = [];
 }
 
-// รับค่าการค้นหาและการกรองหมวดหมู่
+// รับค่าการค้นหา การกรองหมวดหมู่ และการเรียงลำดับ
 $search = trim($_GET['search'] ?? '');
 $selected_category = $_GET['category'] ?? '';
+$sort_by = $_GET['sort'] ?? 'latest'; // ค่าเริ่มต้น: ใหม่ล่าสุด
 
 // 3. สร้างคำสั่ง SQL ดึงรายชื่อเกม พร้อมคะแนนเฉลี่ย (AVG) และจำนวนรีวิว (COUNT)
 $sql = "SELECT g.game_id, g.title, g.developer, g.cover_image, g.store_url, c.category_name,
-               AVG(r.rating) AS avg_rating,
+               COALESCE(AVG(r.rating), 0) AS avg_rating,
                COUNT(r.review_id) AS total_reviews
         FROM gi_games g 
         LEFT JOIN gi_categories c ON g.category_id = c.category_id 
@@ -43,8 +44,19 @@ if (!empty($selected_category)) {
     $params[] = $selected_category;
 }
 
-$sql .= " GROUP BY g.game_id, g.title, g.developer, g.cover_image, g.store_url, c.category_name";
-$sql .= " ORDER BY g.created_at DESC";
+$sql .= " GROUP BY g.game_id, g.title, g.developer, g.cover_image, g.store_url, c.category_name, g.created_at";
+
+// กำหนดเงื่อนไขการเรียงลำดับตามที่ผู้ใช้เลือก
+if ($sort_by === 'rating') {
+    // เรียงตามดาวมากสุด -> ถ้าระดับดาวเท่ากัน ให้เรียงตามจำนวนรีวิวต่อ
+    $sql .= " ORDER BY avg_rating DESC, total_reviews DESC, g.created_at DESC";
+} elseif ($sort_by === 'reviews') {
+    // เรียงตามจำนวนรีวิวมากสุด -> ถ้าจำนวนรีวิวเท่ากัน ให้เรียงตามระดับดาวต่อ
+    $sql .= " ORDER BY total_reviews DESC, avg_rating DESC, g.created_at DESC";
+} else {
+    // ค่าเริ่มต้น: ใหม่ล่าสุด
+    $sql .= " ORDER BY g.created_at DESC";
+}
 
 try {
     $stmt = $pdo->prepare($sql);
@@ -372,7 +384,7 @@ try {
     <div class="filter-section">
         <form method="GET" action="games.php" style="display: flex; gap: 10px; flex: 1; flex-wrap: wrap; align-items: center;">
             <!-- ช่องค้นหาผูกกับ datalist id="game-list" สำหรับ Auto-suggest -->
-            <input type="text" name="search" list="game-list" autocomplete="off" placeholder="ค้นหาชื่อเกม หรือผู้พัฒนา..." value="<?= htmlspecialchars($search) ?>" style="flex: 2; min-width: 200px;">
+            <input type="text" name="search" list="game-list" autocomplete="off" placeholder="ค้นหาชื่อเกม หรือผู้พัฒนา..." value="<?= htmlspecialchars($search) ?>" style="flex: 2; min-width: 180px;">
             
             <!-- รายการตัวเลือกแนะนำอัตโนมัติ -->
             <datalist id="game-list">
@@ -381,7 +393,7 @@ try {
                 <?php endforeach; ?>
             </datalist>
 
-            <select name="category" style="flex: 1; min-width: 170px;">
+            <select name="category" style="flex: 1; min-width: 150px;">
                 <option value="">🕹️ ทุกหมวดหมู่</option>
                 <?php foreach ($categories as $cat): ?>
                     <option value="<?= $cat['category_id'] ?>" <?= $selected_category == $cat['category_id'] ? 'selected' : '' ?>>
@@ -390,8 +402,15 @@ try {
                 <?php endforeach; ?>
             </select>
 
+            <!-- Dropdown สำหรับเรียงลำดับเกม -->
+            <select name="sort" style="flex: 1; min-width: 160px; border-color: var(--neon-yellow);">
+                <option value="latest" <?= $sort_by === 'latest' ? 'selected' : '' ?>>🕒 เกมใหม่ล่าสุด</option>
+                <option value="rating" <?= $sort_by === 'rating' ? 'selected' : '' ?>>⭐ ดาวมากที่สุด</option>
+                <option value="reviews" <?= $sort_by === 'reviews' ? 'selected' : '' ?>>💬 รีวิวมากที่สุด</option>
+            </select>
+
             <button type="submit" class="pixel-btn" style="background: var(--neon-pink);">SEARCH</button>
-            <?php if (!empty($search) || !empty($selected_category)): ?>
+            <?php if (!empty($search) || !empty($selected_category) || $sort_by !== 'latest'): ?>
                 <a href="games.php" class="pixel-btn" style="background: #334155; color: #fff !important;">RESET</a>
             <?php endif; ?>
         </form>
